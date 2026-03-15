@@ -1,0 +1,1355 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UI mokumoku UX</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 36'><mask id='m'><rect width='100%25' height='100%25' fill='white'/><circle cx='24' cy='16' r='2' fill='black'/><circle cx='30' cy='18' r='2' fill='black'/><path d='M14 23 L15 27 L18 25' stroke='black' stroke-width='2' fill='none'/></mask><g mask='url(%23m)'><ellipse cx='10' cy='22' rx='9' ry='8' fill='%238b7355'/><ellipse cx='22' cy='16' rx='14' ry='12' fill='%238b7355'/><ellipse cx='36' cy='22' rx='8' ry='7' fill='%238b7355'/><ellipse cx='16' cy='26' rx='10' ry='8' fill='%238b7355'/><ellipse cx='30' cy='26' rx='10' ry='8' fill='%238b7355'/></g></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@200;300;400;500&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { min-height: 100vh; background: linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%); color: #e8e6e3; font-family: "Noto Sans JP", sans-serif; font-weight: 300; line-height: 1.8; }
+    .header { border-bottom: 1px solid #2a2a2a; padding: 24px 48px; display: flex; justify-content: space-between; align-items: center; background: rgba(10,10,10,0.95); position: sticky; top: 0; z-index: 100; }
+    .header-title-sub { font-size: 14px; letter-spacing: 0.2em; color: #b8956a; margin-bottom: 4px; }
+    .header-title-main { font-size: 24px; font-weight: 300; display: flex; align-items: center; gap: 8px; }
+    .header-progress { display: flex; align-items: center; gap: 12px; }
+    .data-sync-btns { display: flex; gap: 6px; margin-left: 8px; }
+    .sync-btn { padding: 5px 12px; background: transparent; border: 1px solid #3a3a3a; color: #999; font-size: 11px; font-family: inherit; cursor: pointer; letter-spacing: 0.05em; transition: border-color 0.2s, color 0.2s; }
+    .sync-btn:hover { border-color: #b8956a; color: #b8956a; }
+    .progress-label { font-size: 10px; color: #888; letter-spacing: 0.1em; }
+    .progress-value { font-size: 18px; font-weight: 300; color: #b8956a; }
+    .progress-bar { width: 80px; height: 2px; background: #2a2a2a; border-radius: 2px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #b8956a, #c9a87c); transition: width 0.5s; }
+    .learning-section-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 32px; }
+    .header-module-name { font-size: 10px; letter-spacing: 0.15em; color: #b8956a; margin-top: 4px; }
+    .learning-module-name { font-size: 11px; letter-spacing: 0.15em; color: #b8956a; }
+    .module-fixed-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 95; background: rgba(10,10,10,0.97); border-bottom: 1px solid #2a2a2a; padding: 7px 48px; display: flex; justify-content: space-between; align-items: center; transform: translateY(-100%); transition: transform 0.2s ease; pointer-events: none; }
+    .module-fixed-bar.show { transform: translateY(0); }
+    .module-fixed-bar-text { font-size: 11px; color: #888; letter-spacing: 0.15em; }
+    .module-fixed-bar-text span { color: #b8956a; }
+    .nav { display: flex; padding: 0 48px; border-bottom: 1px solid #2a2a2a; background: #0f0f0f; }
+    .nav-btn { padding: 16px 32px; background: transparent; border: none; border-bottom: 2px solid transparent; color: #999; font-size: 14px; font-family: inherit; cursor: pointer; }
+    .nav-btn:hover { color: #999; }
+    .nav-btn.active { border-bottom-color: #b8956a; color: #e8e6e3; }
+    .main { padding: 48px; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .section-title { font-size: 12px; letter-spacing: 0.2em; color: #999; margin-bottom: 32px; }
+    .learning-container { max-width: 900px; }
+    .learning-module-select { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 32px; }
+    .learning-module-btn { padding: 8px 16px; background: #1a1a1a; border: 1px solid #2a2a2a; color: #999; font-size: 14px; font-family: inherit; cursor: pointer; position: relative; }
+    .learning-module-btn:hover { border-color: #b8956a; color: #b0a090; }
+    .learning-module-btn.active { background: #b8956a; border-color: #b8956a; color: #0a0a0a; }
+    .learning-module-btn.locked { opacity: 0.4; cursor: not-allowed; }
+    .learning-module-btn.current::after { content: ''; position: absolute; top: -4px; right: -4px; width: 8px; height: 8px; background: #b8956a; border-radius: 50%; }
+    .learning-section { background: #141414; border: 1px solid #2a2a2a; border-radius: 5px; padding: 40px; margin-bottom: 24px; }
+    .learning-section-title { font-size: 12px; color: #b8956a; letter-spacing: 0.2em; margin-bottom: 24px; }
+    .learning-content h3 { font-size: 18px; color: #e8e6e3; margin: 32px 0 16px 0; }
+    .learning-content h3:first-child { margin-top: 0; }
+    .learning-content p { color: #b0a090; margin-bottom: 16px; font-size: 15px; }
+    .reference-item { padding: 16px 20px; background: #1a1a1a; border: 1px solid #252525; border-radius: 5px; margin-bottom: 12px; }
+    .reference-item-title { font-size: 15px; color: #e8e6e3; margin-bottom: 4px; }
+    .reference-item-author { font-size: 13px; color: #999; margin-bottom: 8px; }
+    .reference-item-desc { font-size: 13px; color: #888; }
+    .worksheet-title { font-size: 16px; margin-bottom: 8px; color: #e8e6e3; }
+    .worksheet-desc { font-size: 14px; color: #888; margin-bottom: 24px; }
+    .worksheet-field { margin-bottom: 24px; }
+    .worksheet-label { font-size: 13px; color: #b8956a; margin-bottom: 8px; display: block; }
+    .worksheet-input { width: 100%; padding: 12px 16px; background: #0a0a0a; border: 1px solid #2a2a2a; color: #e8e6e3; font-size: 14px; font-family: inherit; }
+    .worksheet-input:focus { outline: none; border-color: #b8956a; }
+    .worksheet-textarea { width: 100%; min-height: 120px; padding: 16px; background: #0a0a0a; border: 1px solid #2a2a2a; color: #e8e6e3; font-size: 14px; line-height: 1.7; font-family: inherit; resize: vertical; }
+    .worksheet-textarea:focus { outline: none; border-color: #b8956a; }
+    .btn-submit { padding: 10px 50px; background: #0a0a0a; border: 1px solid #b8956a; border-radius: 50px; color: #b8956a; font-size: 15px; font-family: inherit; cursor: pointer; margin-top: 24px; display: block; margin-left: auto; margin-right: auto; }
+    .btn-submit:hover { background: #1a1915; }
+    .btn-submit.submitted { background: #1a1915; color: #a08060; }
+    .feedback-section { margin-top: 24px; padding-top: 20px; border-top: 1px dashed #2a2a2a; }
+    .feedback-label { font-size: 12px; color: #999; margin-bottom: 8px; display: block; }
+    .feedback-textarea { width: 100%; min-height: 80px; padding: 12px; background: #0a0a0a; border: 1px solid #2a2a2a; color: #e8e6e3; font-size: 13px; line-height: 1.6; font-family: inherit; resize: vertical; }
+    .feedback-textarea:focus { outline: none; border-color: #b8956a; }
+    .schedule-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .schedule-item { background: #141414; border: 1px solid #2a2a2a; border-radius: 5px; padding: 20px; cursor: pointer; transition: border-color 0.2s; position: relative; }
+    .schedule-item:hover { border-color: #b8956a; }
+    .schedule-item.current { background: #1a1915; border-color: #b8956a; }
+    .schedule-item.past { opacity: 0.5; }
+    .schedule-item.submitted::after { content: '✓'; position: absolute; top: 10px; right: 10px; color: #b8956a; font-size: 16px; }
+    .schedule-item-header { display: flex; justify-content: space-between; margin-bottom: 12px; }
+    .schedule-item-week { font-size: 24px; font-weight: 200; color: #777; }
+    .schedule-item.current .schedule-item-week { color: #b8956a; }
+    .schedule-item-date { font-size: 12px; color: #999; }
+    .schedule-item-module { font-size: 13px; color: #b0a090; margin-bottom: 4px; }
+    .schedule-item-session { font-size: 11px; color: #888; }
+    .calendar-container { display: flex; gap: 24px; flex-wrap: wrap; max-width: 1050px; }
+    .calendar-month { background: #141414; border: 1px solid #2a2a2a; border-radius: 5px; padding: 24px; width: 320px; flex: none; }
+    .calendar-month-title { font-size: 14px; color: #b8956a; margin-bottom: 16px; text-align: center; letter-spacing: 0.1em; }
+    .calendar-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 8px; justify-items: center; }
+    .calendar-weekday { font-size: 10px; color: #999; text-align: center; padding: 4px; }
+    .calendar-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; justify-items: center; }
+    .calendar-day { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #999; background: #1a1a1a; border-radius: 5px; margin: 0 auto; position: relative; }
+    .calendar-day.empty { background: transparent; }
+    .calendar-day.today { border: 1px solid #b8956a; }
+    .calendar-day.logged { background: transparent; }
+    .calendar-day.logged .day-number { position: absolute; color: #999; font-weight: 500; font-size: 10px; z-index: 2; right: 4px; bottom: 2px; }
+    .calendar-day.lecture::before { content: ''; position: absolute; bottom: 2px; width: 4px; height: 4px; background: #b8956a; border-radius: 50%; }
+    .mokumoku { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+    .calendar-legend { display: flex; gap: 24px; margin-top: 24px; padding: 16px; background: #1a1a1a; border-radius: 5px; flex-wrap: wrap; }
+    .legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #888; }
+    .legend-color { width: 12px; height: 12px; border-radius: 2px; }
+    .quiz-container { max-width: 700px; margin: 0 auto; }
+    /* ── クイズ開始画面 ── */
+    @keyframes mokumokuFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+    @keyframes mokumokuFloat2 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+    @keyframes quizFadeIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+
+    .quiz-start { padding: 32px 0 24px; animation: quizFadeIn 0.4s ease; }
+    .quiz-start-hero {
+      display: flex; flex-direction: column; align-items: center;
+      margin-bottom: 32px; position: relative;
+    }
+    .quiz-mascot-wrap {
+      animation: mokumokuFloat 3s ease-in-out infinite;
+      margin-bottom: 16px;
+    }
+    .quiz-start-title {
+      font-size: 22px; color: #c8a878; letter-spacing: 0.08em;
+      margin-bottom: 6px; font-weight: 300;
+    }
+    .quiz-start-sub { font-size: 13px; color: #999; letter-spacing: 0.05em; }
+
+    .quiz-level-label {
+      font-size: 11px; color: #888; letter-spacing: 0.2em;
+      margin-bottom: 12px; text-align: left;
+    }
+    .quiz-level { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 28px; }
+    .quiz-level-card {
+      background: #141414; border: 1px solid #2a2a2a; border-radius: 5px;
+      padding: 20px 16px; cursor: pointer; text-align: center;
+      transition: border-color 0.2s, background 0.2s, transform 0.15s;
+      position: relative; overflow: hidden;
+    }
+    .quiz-level-card::before {
+      content: ''; position: absolute; inset: 0;
+      opacity: 0; transition: opacity 0.2s;
+    }
+    .quiz-level-card[data-level="beginner"]::before {
+      background: radial-gradient(ellipse at 50% 0%, rgba(80,180,100,0.08), transparent 70%);
+    }
+    .quiz-level-card[data-level="intermediate"]::before {
+      background: radial-gradient(ellipse at 50% 0%, rgba(180,140,60,0.1), transparent 70%);
+    }
+    .quiz-level-card:hover::before { opacity: 1; }
+    .quiz-level-card:hover { border-color: #b8956a; transform: translateY(-2px); }
+    .quiz-level-card.selected {
+      border-color: #b8956a; background: #1a1915;
+    }
+    .quiz-level-card.selected::before { opacity: 1; }
+    .quiz-level-icon { margin-bottom: 10px; display: flex; justify-content: center; }
+    .quiz-level-name { font-size: 11px; color: #b8956a; letter-spacing: 0.15em; margin-bottom: 4px; }
+    .quiz-level-desc { font-size: 12px; color: #888; margin-bottom: 12px; }
+    .quiz-level-divider { border: none; border-top: 1px solid #222; margin: 12px 0; }
+    .quiz-level-meta { font-size: 11px; color: #888; line-height: 1.9; text-align: left; }
+    .quiz-level-meta span { display: block; }
+    .quiz-level-meta span::before { content: '—  '; color: #3a3a3a; }
+
+    .quiz-subject { display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 24px; }
+    .quiz-subject-card { background: #141414; border: 1px solid #2a2a2a; border-radius: 5px; padding: 24px; cursor: pointer; text-align: left; transition: border-color 0.2s; }
+    .quiz-subject-card:hover { border-color: #b8956a; }
+    .quiz-subject-card.selected { border-color: #b8956a; background: #1a1915; }
+    .quiz-subject-title { font-size: 14px; color: #b8956a; margin-bottom: 8px; }
+    .quiz-subject-desc { font-size: 13px; color: #888; }
+
+    .btn-quiz {
+      padding: 14px 48px; background: #b8956a; border: none;
+      color: #0a0a0a; font-size: 14px; font-family: inherit;
+      cursor: pointer; border-radius: 5px;
+      transition: background 0.2s, transform 0.15s;
+      display: block; margin: 0 auto;
+    }
+    .btn-quiz:hover { background: #a08060; transform: translateY(-1px); }
+    .quiz-question { background: #141414; border: 1px solid #2a2a2a; border-radius: 5px; padding: 32px; margin-bottom: 16px; }
+    .quiz-meta { display: flex; justify-content: space-between; margin-bottom: 16px; font-size: 12px; color: #999; }
+    .quiz-progress { height: 4px; background: #2a2a2a; border-radius: 2px; margin-bottom: 24px; overflow: hidden; }
+    .quiz-progress-fill { height: 100%; background: #b8956a; transition: width 0.3s; }
+    .quiz-category { font-size: 11px; color: #b8956a; letter-spacing: 0.1em; margin-bottom: 12px; }
+    .quiz-text { font-size: 16px; margin-bottom: 24px; line-height: 1.8; }
+    .quiz-options { display: grid; gap: 12px; }
+    .quiz-option { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 5px; padding: 14px 18px; cursor: pointer; text-align: left; font-size: 14px; display: flex; align-items: center; gap: 12px; }
+    .quiz-option:hover:not(.answered) { border-color: #b8956a; }
+    .quiz-option.correct { border-color: #b8956a; background: rgba(139,115,85,0.15); color: #d4b896; }
+    .quiz-option.wrong { border-color: #6b4444; background: rgba(107,68,68,0.15); color: #aa8888; opacity: 0.7; }
+    .quiz-option-label { width: 24px; height: 24px; border: 1px solid #777; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #999; flex-shrink: 0; }
+    .quiz-option.correct .quiz-option-label { background: #b8956a; border-color: #b8956a; color: #0a0a0a; }
+    .quiz-option.wrong .quiz-option-label { background: #6b4444; border-color: #6b4444; color: #e8e6e3; }
+    .quiz-feedback { margin-top: 20px; padding: 16px; background: #1a1915; border-left: 3px solid #b8956a; font-size: 14px; color: #b0a090; display: none; }
+    .quiz-feedback.show { display: block; }
+    .btn-next { padding: 12px 32px; background: transparent; border: 1px solid #b8956a; color: #b8956a; font-size: 14px; font-family: inherit; cursor: pointer; margin-top: 16px; display: none; }
+    .btn-next.show { display: inline-block; }
+    .btn-next:hover { background: #b8956a; color: #0a0a0a; }
+    .quiz-result { text-align: center; padding: 48px 0; }
+    .quiz-result-score { font-size: 64px; font-weight: 200; color: #b8956a; margin-bottom: 16px; }
+    .quiz-result-text { font-size: 18px; margin-bottom: 8px; }
+    .quiz-result-sub { font-size: 14px; color: #888; margin-bottom: 32px; }
+    .footer { border-top: 1px solid #2a2a2a; padding: 24px 48px; display: flex; justify-content: space-between; background: #0a0a0a; margin-top: 48px; }
+    .footer-text { font-size: 12px; color: #777; }
+    .header-mokumoku-float { animation: mokumokuFloat2 3s ease-in-out infinite; display: inline-flex; }
+    .mokumoku-message { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: #1a1a1a; border: 2px solid #b8956a; border-radius: 20px; padding: 16px 24px; display: flex; align-items: center; gap: 16px; z-index: 1000; animation: mokumokuPop 0.3s ease; }
+    .mokumoku-message-text { color: #e8e6e3; font-size: 14px; }
+    @keyframes mokumokuPop { from { transform: translateX(-50%) scale(0.8); opacity: 0; } to { transform: translateX(-50%) scale(1); opacity: 1; } }
+    @media (max-width: 900px) {
+      .header { padding: 16px 24px; flex-direction: column; gap: 16px; align-items: flex-start; }
+      .nav { padding: 0 24px; overflow-x: auto; }
+      .nav-btn { padding: 12px 20px; white-space: nowrap; }
+      .main { padding: 24px; }
+      .schedule-grid { grid-template-columns: repeat(2, 1fr); }
+      .footer { padding: 16px 24px; flex-direction: column; gap: 8px; }
+      .learning-section { padding: 24px; }
+      .calendar-container { flex-direction: column; }
+      .calendar-month { min-width: auto; }
+      .mokumoku-message { bottom: 20px; right: 20px; left: auto; transform: none; padding: 10px 16px; font-size: 12px; }
+      .mokumoku-message svg { width: 32px; height: 28px; } }
+    .note-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1a1a1a; border: 1px solid #b8956a; padding: 24px; z-index: 1000; min-width: 280px; max-width: 400px; animation: popupIn 0.2s ease; }
+    .note-popup-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 999; }
+    .note-popup-date { font-size: 11px; color: #b8956a; letter-spacing: 0.1em; margin-bottom: 8px; }
+    .note-popup-title { font-size: 14px; color: #e8e6e3; margin-bottom: 16px; }
+    .note-popup-btn { padding: 8px 20px; background: transparent; border: 1px solid #b8956a; color: #b8956a; font-size: 13px; font-family: inherit; cursor: pointer; margin-right: 8px; }
+    .note-popup-btn:hover { background: #b8956a; color: #0a0a0a; }
+    @keyframes popupIn { from { opacity: 0; transform: translate(-50%, -50%) scale(0.9); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+    .calendar-day .note-mark { position: absolute; bottom: 2px; left: 3px; font-size: 7px; color: #b8956a; font-weight: 500; }
+    .calendar-day.logged .mokumoku { top: 2px; left: auto; right: 2px; transform: none; }
+    .calendar-day.logged .mokumoku svg { width: 18px; height: 16px; }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div>
+      <p class="header-title-sub">UX/UI Design Program</p>
+      <h1 class="header-title-main">
+       UI
+       <span class="header-mokumoku-float"><svg width="40" height="32" viewBox="0 0 44 36" style="margin: 0 4px;">
+        <mask id="eyeMask"><rect width="100%" height="100%" fill="white"/><circle cx="24" cy="16" r="2" fill="black"/><circle cx="30" cy="18" r="2" fill="black"/></mask>
+        <g mask="url(#eyeMask)"><ellipse cx="10" cy="22" rx="9" ry="8" fill="#b8956a"/><ellipse cx="22" cy="16" rx="14" ry="12" fill="#b8956a"/><ellipse cx="36" cy="22" rx="8" ry="7" fill="#b8956a"/><ellipse cx="16" cy="26" rx="10" ry="8" fill="#b8956a"/><ellipse cx="30" cy="26" rx="10" ry="8" fill="#b8956a"/></g>
+        <path d="M14 23 L15 27 L18 25" stroke="#0a0a0a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+       </svg></span>
+       UX
+      </h1>
+      <p class="header-module-name" id="header-module-name" style="display:none;"></p>
+    </div>
+    <div class="header-progress">
+      <span class="progress-label">PROGRESS</span>
+      <span class="progress-value" id="progress-percent">0%</span>
+      <div class="progress-bar">
+        <div class="progress-bar-fill" id="progress-bar-fill" style="width: 0%;"></div>
+      </div>
+      <div class="data-sync-btns">
+        <button class="sync-btn" onclick="exportData()" title="データをJSONで保存">↓ 保存</button>
+        <label class="sync-btn" title="JSONを読み込む">↑ 読込
+          <input type="file" accept=".json" onchange="importData(event)" style="display:none;">
+        </label>
+      </div>
+    </div>
+  </header>
+
+  <div class="module-fixed-bar" id="module-fixed-bar">
+    <p class="module-fixed-bar-text" id="module-fixed-bar-text"></p>
+  </div>
+
+  <nav class="nav">
+    <button class="nav-btn active" data-tab="schedule">スケジュール</button>
+    <button class="nav-btn" data-tab="learning">学習内容</button>
+    <button class="nav-btn" data-tab="calendar">カレンダー</button>
+    <button class="nav-btn" data-tab="quiz">クイズ</button>
+  </nav>
+
+  <main class="main">
+    <div class="tab-content active" id="tab-schedule">
+      <div class="learning-container" style="max-width: 1200px;">
+        <h2 class="section-title">スケジュール — MARCH 2026 TO JULY 2026</h2>
+        <div class="schedule-grid" id="schedule-grid"></div>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-learning">
+      <div class="learning-container">
+        <div class="learning-section-header">
+          <h2 class="section-title" style="margin-bottom:0;">学習内容</h2>
+          <span class="learning-module-name" id="learning-module-name"></span>
+        </div>
+        <div class="learning-module-select" id="learning-module-select"></div>
+        <div id="learning-content-area"></div>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-calendar">
+      <div class="learning-container" style="max-width: 1200px;">
+        <h2 class="section-title">学習カレンダー — もくもくちゃんに会いに来てね</h2>
+        <div class="calendar-container" id="calendar-container"></div>
+        <div class="calendar-legend">
+          <div class="legend-item">
+            <svg width="24" height="24" viewBox="0 0 44 36">
+              <mask id="eyeMaskLegend"><rect width="100%" height="100%" fill="white"/><circle cx="24" cy="16" r="2" fill="black"/><circle cx="30" cy="18" r="2" fill="black"/></mask>
+              <g mask="url(#eyeMaskLegend)"><ellipse cx="10" cy="22" rx="9" ry="8" fill="#b8956a"/><ellipse cx="22" cy="16" rx="14" ry="12" fill="#b8956a"/><ellipse cx="36" cy="22" rx="8" ry="7" fill="#b8956a"/><ellipse cx="16" cy="26" rx="10" ry="8" fill="#b8956a"/><ellipse cx="30" cy="26" rx="10" ry="8" fill="#b8956a"/></g>
+              <path d="M14 23 L15 27 L18 25" stroke="#0a0a0a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+            </svg>
+            <span>ログインした日</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color" style="border: 1px solid #b8956a; background: transparent;"></div>
+            <span>今日</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color" style="background: #b8956a; border-radius: 50%; width: 6px; height: 6px;"></div>
+            <span>講義日</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-quiz">
+      <div class="quiz-container" id="quiz-container"></div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p class="footer-text">BOKAN Design Studio — UX/UI Learning Program 2026</p>
+    <p class="footer-text">開始: 2026.03.04 → 完了予定: 2026.07.18</p>
+  </footer>
+
+  <script>
+// ========== DATA DEFINITIONS ==========
+const CURRICULUM = [
+  { id: 'A', title: 'UXデザイン／人間中心設計', weeks: [1, 2], hasContent: true },
+  { id: 'B', title: '認知工学', weeks: [3, 4], hasContent: true },
+  { id: 'C', title: 'ユーザーリサーチ／ユーザーモデリング', weeks: [5, 6], hasContent: true },
+  { id: 'D', title: 'アイデア（発想・具体化）', weeks: [7, 8], hasContent: true },
+  { id: 'E', title: '情報設計／画面遷移', weeks: [9, 10], hasContent: true },
+  { id: 'F', title: 'UIデザイン実践／プロトタイプ制作', weeks: [11, 12], hasContent: true },
+  { id: 'G', title: 'ユーザビリティテスト', weeks: [13, 14], hasContent: true },
+  { id: 'H', title: 'UXリサーチ基礎／学術的視点', weeks: [15, 16], hasContent: true },
+  { id: 'I', title: 'UXリサーチ実践', weeks: [17, 18], hasContent: true },
+  { id: 'J', title: 'UXリサーチデータ分析・活用', weeks: [19, 20], hasContent: true }
+];
+
+const SCHEDULE = [
+  { week: 1, date: '2026-03-07', module: 'A', session: 1 },
+  { week: 2, date: '2026-03-14', module: 'A', session: 2 },
+  { week: 3, date: '2026-03-21', module: 'B', session: 1 },
+  { week: 4, date: '2026-03-28', module: 'B', session: 2 },
+  { week: 5, date: '2026-04-04', module: 'C', session: 1 },
+  { week: 6, date: '2026-04-11', module: 'C', session: 2 },
+  { week: 7, date: '2026-04-18', module: 'D', session: 1 },
+  { week: 8, date: '2026-04-25', module: 'D', session: 2 },
+  { week: 9, date: '2026-05-02', module: 'E', session: 1 },
+  { week: 10, date: '2026-05-09', module: 'E', session: 2 },
+  { week: 11, date: '2026-05-16', module: 'F', session: 1 },
+  { week: 12, date: '2026-05-23', module: 'F', session: 2 },
+  { week: 13, date: '2026-05-30', module: 'G', session: 1 },
+  { week: 14, date: '2026-06-06', module: 'G', session: 2 },
+  { week: 15, date: '2026-06-13', module: 'H', session: 1 },
+  { week: 16, date: '2026-06-20', module: 'H', session: 2 },
+  { week: 17, date: '2026-06-27', module: 'I', session: 1 },
+  { week: 18, date: '2026-07-04', module: 'I', session: 2 },
+  { week: 19, date: '2026-07-11', module: 'J', session: 1 },
+  { week: 20, date: '2026-07-18', module: 'J', session: 2 }
+];
+
+const LEARNING_CONTENT = {
+  A: {
+    overview: "このモジュールでは、UXデザインとUIデザインの違い、そして「人間中心設計」という考え方の基礎を学びます。",
+    topics: [
+      { title: "1. UXデザイン / UIデザイン", content: "UIデザインは、ユーザーが直接触れる「接点」のデザインです。UXデザインは、ユーザーがサービスを通じて得る「体験全体」のデザインです。" },
+      { title: "2. ユーザー／体験価値", content: "ユーザーとは、あなたのデザインを実際に使う人のことです。体験価値とは、ユーザーがサービスを通じて得る「意味のある価値」です。" },
+      { title: "3. 予期的UX・一時的UX・エピソード的UX・累積的UX", content: "UXは時間軸の中で変化します。予期的UX（使う前の期待）、一時的UX（使用中の体験）、エピソード的UX（使用後の記憶）、累積的UX（繰り返し使った結果の印象）。" },
+      { title: "4. 人間中心設計とUXデザイン", content: "人間中心設計は、ISO 9241-210で定義された設計プロセスです。利用状況の理解→ユーザー要求の明確化→設計による解決案の作成→評価、というサイクルを繰り返します。" },
+      { title: "5. UX 5階層モデル", content: "Jesse James Garrettが提唱したモデル。戦略→要件→構造→骨格→表層。下から積み上げるのが本来の順序です。" },
+      { title: "6. ソフトウェア開発におけるUXデザイン", content: "UXデザインは単独で存在するのではなく、開発プロセスの中に組み込まれます。" },
+      { title: "7. Lean UX・アジャイル・ウォーターフォール", content: "ウォーターフォールは順番に進む手法、アジャイルは短いサイクルで繰り返す手法、Lean UXは仮説を最小限のプロトタイプで検証する手法です。" },
+      { title: "8. サービスデザイン・システムデザイン", content: "サービスデザインは、人、場所、プロセスを含めた「サービス全体」を設計します。" }
+    ],
+    references: [
+      { title: "UXデザインの教科書", author: "安藤昌也", desc: "日本語で体系的に学べる一冊" },
+      { title: "The Elements of User Experience", author: "Jesse James Garrett", desc: "5階層モデルの原典" },
+      { title: "誰のためのデザイン？", author: "ドナルド・A・ノーマン", desc: "デザイン思考の古典" }
+    ],
+    worksheets: [
+      { id: "task1", title: "課題1：UXの4つの時間軸で分析する", desc: "自分がよく使うサービスを一つ選び、4つの視点で分析してください。", session: 1,
+        fields: [
+          { id: "service", label: "分析するサービス名", type: "input" },
+          { id: "anticipatory", label: "予期的UX（使う前の期待）", type: "textarea" },
+          { id: "momentary", label: "一時的UX（使用中の体験）", type: "textarea" },
+          { id: "episodic", label: "エピソード的UX（使用後の記憶）", type: "textarea" },
+          { id: "cumulative", label: "累積的UX（繰り返し使った結果）", type: "textarea" }
+        ]
+      },
+      { id: "task2", title: "課題2：5階層モデルを逆算する", desc: "同じサービスについて、5階層モデルを推測してください。", session: 2,
+        fields: [
+          { id: "surface", label: "表層（Surface）", type: "textarea" },
+          { id: "skeleton", label: "骨格（Skeleton）", type: "textarea" },
+          { id: "structure", label: "構造（Structure）", type: "textarea" },
+          { id: "scope", label: "要件（Scope）", type: "textarea" },
+          { id: "strategy", label: "戦略（Strategy）", type: "textarea" }
+        ]
+      }
+    ]
+  },
+  B: {
+    overview: "このモジュールでは、人間の認知の仕組みを学びます。心理学と行動経済学の知見をデザインに活かす方法を身につけます。",
+    topics: [
+      { title: "1. 行動経済学／認知心理学", content: "人間は合理的に判断しない。システム1（直感的）とシステム2（論理的）の使い分けを理解することで、ユーザーがどう判断するかを予測できる。" },
+      { title: "2. 人間工学／感性工学", content: "人間工学は身体的な使いやすさ。感性工学は感情や印象を設計する学問。" },
+      { title: "3. プロスペクト理論／ピークエンドの法則", content: "人は利益より損失を強く感じる。体験の印象は、ピークとエンドで決まる。" },
+      { title: "4. ヒューリスティック／調査バイアス", content: "ヒューリスティックは「経験則による近道」。調査バイアスはリサーチ時にデータが歪む原因。" },
+      { title: "5. 行動変容／UIデザインでの活用", content: "ナッジやデフォルト設定の工夫で行動を誘導できる。" },
+      { title: "6. チート戦略／習慣化戦略／意識化戦略", content: "チート：負担を減らす。習慣化：繰り返しを促す。意識化：立ち止まらせる。" },
+      { title: "7. 認知負荷／選択的注意／視覚的階層", content: "認知負荷を減らし、重要なものに目を向けさせる設計が必要。" },
+      { title: "8. 心理的安全性／適切なフィードバック", content: "失敗しても大丈夫という安心感。操作の結果をすぐ伝える。" }
+    ],
+    references: [
+      { title: "ファスト&スロー", author: "ダニエル・カーネマン", desc: "行動経済学の古典" },
+      { title: "予想どおりに不合理", author: "ダン・アリエリー", desc: "人間の不合理な行動を解き明かす" },
+      { title: "Hooked ハマるしかけ", author: "ニール・イヤール", desc: "習慣化のフレームワーク" }
+    ],
+    worksheets: [
+      { id: "task1", title: "課題1：認知バイアスを見つける", desc: "日常生活やサービスの中で、認知バイアスが利用されている例を3つ見つけてください。", session: 1,
+        fields: [
+          { id: "example1", label: "例1：どこで見つけたか、何のバイアスか", type: "textarea" },
+          { id: "example2", label: "例2：どこで見つけたか、何のバイアスか", type: "textarea" },
+          { id: "example3", label: "例3：どこで見つけたか、何のバイアスか", type: "textarea" }
+        ]
+      },
+      { id: "task2", title: "課題2：寺院体験をピークエンドで設計する", desc: "寺院での体験を「ピーク」と「エンド」の視点で設計してください。", session: 2,
+        fields: [
+          { id: "peak", label: "ピーク：最も印象に残る瞬間をどう設計するか", type: "textarea" },
+          { id: "end", label: "エンド：最後の体験をどう設計するか", type: "textarea" },
+          { id: "why", label: "なぜその設計が「関わり続ける」につながるか", type: "textarea" }
+        ]
+      }
+    ]
+  },
+  C: {
+    overview: "このモジュールでは、ユーザーを「知る」ための技法を学びます。リサーチは感覚ではなく方法論です。誰に・何を・どう聞くかを設計することで、デザインの根拠が生まれます。「ユーザーはこうに違いない」という思い込みを、データで置き換えていくプロセスを身につけます。",
+    topics: [
+      { title: "1. 探索リサーチと検証リサーチ", content: "リサーチには2種類あります。探索リサーチは「何が問題か」「ユーザーは何を求めているか」を発見するためのもの。検証リサーチは「この解決策は正しいか」を確認するためのものです。プロジェクトの前半は探索が中心、後半は検証が中心になります。両者を混同すると、まだ問題が定義できていない段階で解決策を検証しようとする失敗が起きます。" },
+      { title: "2. リサーチ計画と準備", content: "リサーチは計画なしに始めると失敗します。①誰に聞くか（対象者の条件）、②何を明らかにしたいか（リサーチクエスチョン）、③どんな方法で（インタビュー・観察・アンケート）、④何人に（サンプル数）を事前に決めます。特にリサーチクエスチョンが曖昧だと、インタビュー後に「何を得たのかわからない」という状態になります。" },
+      { title: "3. インタビューガイド作成", content: "インタビューガイドは「質問リスト」ではなく「会話の地図」です。オープンクエスチョン（はい/いいえで終わらない質問）を中心に構成します。「このサービスは使いやすいですか？」より「最後にこのサービスを使ったときのことを教えてください」の方が深い話を引き出せます。また「なぜ？」を繰り返して掘り下げる技法（5 whys）も有効です。" },
+      { title: "4. プロトペルソナ作成とインタビュー", content: "プロトペルソナとは、リサーチ前に仮で作るユーザー像です。チームの思い込みを可視化し、「私たちはこういう人を想定している」を共有するツールです。リサーチ後に実際のデータで更新します。重要なのは「仮説として作る」という姿勢です。プロトペルソナはリサーチで崩すためにあります。" },
+      { title: "5. インタビュー結果の分析方法", content: "インタビュー結果を分析するには、まず記録（録音・メモ）を整理し、発言を1枚ずつカードに書き出します。その後、似たカードをグループにまとめていく「アフィニティダイアグラム（KJ法）」が代表的な手法です。バラバラな発言からパターンを見つけ、「このユーザーたちが共通して感じていること」を言語化するのが目的です。" },
+      { title: "6. ユーザーモデリング", content: "ユーザーモデリングとは、リサーチ結果をもとに「このユーザーはどう考え、どう行動するか」を構造化することです。ペルソナ、カスタマージャーニーマップ、メンタルモデルなどがツールとして使われます。「なんとなくこういう人」ではなく「この人はこの瞬間にこう感じる」まで落とし込むことで、設計の意思決定に使えるレベルになります。" },
+      { title: "7. ペルソナ・カスタマージャーニーマップ", content: "ペルソナはリサーチをもとにした仮想のユーザー像。名前・年齢・職業・行動パターン・目標・不満を具体的に描きます。カスタマージャーニーマップは、そのペルソナがサービスを利用する一連の流れを時系列で可視化したものです。各タッチポイントでの行動・思考・感情・課題を整理することで、設計上の空白や矛盾が見えてきます。" },
+      { title: "8. 価値マップ／ダイアグラム", content: "価値マップは「ユーザーが得たいこと（ゲイン）」と「避けたいこと（ペイン）」を整理し、サービスが提供できる価値と噛み合っているかを確認するツールです。Value Proposition Canvasとも呼ばれます。ユーザーのペインとゲインに対して、自分のサービスがどう応えているかを可視化することで、提供価値の強みと抜け穴が見えてきます。" }
+    ],
+    references: [
+      { title: "ユーザーインタビューをはじめよう", author: "Steve Portigal（丸善出版）", desc: "インタビュー技法の実践的ガイド。質問の作り方から分析まで網羅" },
+      { title: "Lean UX", author: "Jeff Gothelf / Josh Seiden", desc: "仮説→検証のサイクルで進めるリサーチ手法。プロトペルソナの概念もここから" },
+      { title: "UXリサーチの教科書", author: "草野孔希", desc: "日本語で読める実践的なリサーチ入門書" }
+    ],
+    worksheets: [
+      { id: "task1", title: "課題1：プロトペルソナを作る", desc: "自分がよく使うサービス（EC・動画配信・SNSなど）のユーザーを1人、仮のペルソナとして描いてください。リサーチ前の「仮説」として書くことが目的です。", session: 1,
+        fields: [
+          { id: "service", label: "対象サービス名", type: "input" },
+          { id: "name", label: "名前・年齢・職業（架空でOK）", type: "input" },
+          { id: "situation", label: "このサービスをどんな状況・頻度で使っているか", type: "textarea" },
+          { id: "goal", label: "このサービスに求めているもの（目的・期待）", type: "textarea" },
+          { id: "pain", label: "このサービスに感じている不満・不安・障壁", type: "textarea" }
+        ]
+      },
+      { id: "task2", title: "課題2：カスタマージャーニーを描く", desc: "課題1で作ったペルソナが、そのサービスを使う一連の体験を時系列で描いてください。", session: 2,
+        fields: [
+          { id: "discover", label: "知る：どこでこのサービスを知ったか", type: "textarea" },
+          { id: "before", label: "使う前：どんな気持ちで、何をするか", type: "textarea" },
+          { id: "during", label: "使っている間：何をして、どんな感情が動くか", type: "textarea" },
+          { id: "after", label: "使った後：何を思い出すか、次の行動は何か", type: "textarea" },
+          { id: "gap", label: "設計の余地：どこに改善の可能性があるか", type: "textarea" }
+        ]
+      }
+    ]
+  },
+  D: {
+    overview: "このモジュールでは、リサーチで得たユーザー理解をもとに、アイデアを発想し具体化する技法を学びます。「良いアイデアを出す」のではなく「アイデアを出す仕組みを設計する」ことが目的です。量から質へ、発散から収束へというプロセスを身につけます。",
+    topics: [
+      { title: "1. アイデア出しのプロセス", content: "アイデアは突然降ってくるものではなく、プロセスで生み出すものです。まず「発散（できるだけ多く出す）」、次に「収束（絞り込む）」という2段階があります。発散と収束を混ぜてしまうと、批判を恐れて良いアイデアが出なくなります。大切なのは、評価を後回しにして量を優先する発散フェーズを意図的に作ることです。" },
+      { title: "2. 問いを立てる／絵・文字・図で表現する", content: "アイデア出しの前に「正しい問いを立てる」ことが重要です。問いが狭すぎると解決策が限定され、広すぎると発散できません。「どうすれば○○できるか（HMW：How Might We）」という形式が使いやすいです。また、言葉だけでなく絵や図でアイデアを表現することで、言語化しにくいアイデアも形にできます。" },
+      { title: "3. バリエーションを考える", content: "一つのアイデアに固執しないために、意図的にバリエーションを作ります。「もし対象が子供だったら」「もし予算がゼロだったら」「もし逆のことをしたら」などの制約を変えることで、思考の幅が広がります。スキャンパー法（Substitute・Combine・Adapt・Modify・Put to other uses・Eliminate・Reverse）も有効な発想の型です。" },
+      { title: "4. アイデアを一つに絞る／優先順位", content: "発散で出たアイデアを収束させるには、評価の基準が必要です。「ユーザーにとっての価値」「実現可能性」「独自性」などの軸で評価します。全員が好きなものを選ぶのではなく、ユーザー課題との繋がりが強いものを選ぶことが原則です。ドット投票などチームで合意するための手法も活用します。" },
+      { title: "5. ユーザー課題との繋がり", content: "アイデアは「面白い」だけでは不十分です。「どのユーザーの、どの課題を解決するか」が明確でなければ設計に進めません。Module Cで作ったペルソナとカスタマージャーニーマップに照らし合わせて、「このアイデアはどのタッチポイントのどの痛みに効くか」を確認します。アイデアとユーザー課題を繋ぐ一文を書けるかどうかが判断基準です。" },
+      { title: "6. アイデアをユーザー行動に変換", content: "アイデアは「機能」として考えるのではなく、「ユーザーがどう行動するか」として考えます。「通知機能」ではなく「ユーザーが自然にサービスを思い出して戻ってくる」という行動の変化として描くことで、設計の目的が明確になります。機能ではなく行動を起点にすることで、本当に必要なものが見えてきます。" },
+      { title: "7. ユーザーストーリーマッピング（USM）の作成", content: "ユーザーストーリーマッピングは、ユーザーの行動を時系列（左から右）と詳細度（上から下）の2軸で整理する手法です。上の行には「大きな行動（知る・使う・続ける）」、下の行には「具体的な操作・機能」を並べます。全体像を俯瞰しながら、何が足りないか・何が重複しているかを発見できます。" },
+      { title: "8. MVPライン／価値提供に最低限必要な機能の抽出", content: "MVPとはMinimum Viable Product、最小限の価値提供ができる状態のことです。USMにMVPラインを引くことで「最初にリリースすべき機能」が決まります。完璧を目指す前に、まず価値を届けることが優先です。MVPは「小さく作る」のではなく「価値の核心だけを届ける」という考え方です。" }
+    ],
+    references: [
+      { title: "アイデアのつくり方", author: "ジェームス・W・ヤング", desc: "アイデア発想の古典。薄くて読みやすく、今も色褪せない一冊" },
+      { title: "ユーザーストーリーマッピング", author: "Jeff Patton", desc: "USMの原典。ユーザーの行動を地図にして開発優先度を決める手法" },
+      { title: "SPRINT 最速仕事術", author: "Jake Knapp", desc: "5日間でアイデアを検証するデザインスプリントの実践書" }
+    ],
+    worksheets: [
+      { id: "task1", title: "課題1：HMW問いを立ててアイデアを出す", desc: "Module Cで分析したサービスのユーザー課題を一つ選び、「どうすれば○○できるか（HMW）」という問いを立てて、アイデアを10個以上出してください。", session: 1,
+        fields: [
+          { id: "challenge", label: "選んだユーザー課題（Module Cの結果から）", type: "textarea" },
+          { id: "hmw", label: "HMW問い（どうすれば〜できるか）", type: "input" },
+          { id: "ideas", label: "アイデアを10個以上（箇条書きでOK）", type: "textarea" },
+          { id: "pick", label: "最も可能性を感じるアイデアを1つ選んだ理由", type: "textarea" }
+        ]
+      },
+      { id: "task2", title: "課題2：ユーザーストーリーマップを描く", desc: "選んだアイデアをもとに、ユーザーがサービスを使う流れをストーリーマップとして整理し、MVPラインを引いてください。", session: 2,
+        fields: [
+          { id: "bigsteps", label: "大きな行動の流れ（左から右へ、3〜5ステップ）", type: "textarea" },
+          { id: "details", label: "各ステップの具体的な操作・機能（箇条書き）", type: "textarea" },
+          { id: "mvp", label: "MVPラインを引く：最初に必要な機能はどれか、その理由", type: "textarea" }
+        ]
+      }
+    ]
+  },
+  E: {
+    overview: "このモジュールでは、アイデアを「画面」に落とし込む技法を学びます。何をどこに置くか、どう繋げるか、どう伝えるか。情報設計はユーザーが迷わず目的を達成できる「構造」を作る仕事です。見た目の前に、まず構造を設計することを身につけます。",
+    topics: [
+      { title: "1. 情報設計／定義と成果物", content: "情報設計（Information Architecture）とは、ユーザーが必要な情報を迷わず見つけられるよう、情報を整理・分類・命名する設計です。主な成果物はサイトマップ（何がどこにあるか）とフロー図（ユーザーがどう動くか）の2つです。この2つが揃って初めて「構造が決まった」状態になります。" },
+      { title: "2. 画面構成と画面遷移", content: "画面遷移とは、ユーザーが操作したときにどの画面からどの画面へ移動するかの設計です。画面遷移図を作ることで、抜けている画面・行き止まりになっている導線・戻り方が不明な箇所を発見できます。フロー図との違いは、フロー図がユーザーの行動を描くのに対して、画面遷移図はシステム側の画面構造を描く点です。" },
+      { title: "3. USMのMVPラインの実現", content: "Module Dで引いたMVPラインを、実際の画面構成として具体化します。「この機能を実現するには何の画面が必要か」を一つずつ考えます。機能と画面は1対1ではありません。一つの画面が複数の機能を担うこともあれば、一つの機能が複数の画面にまたがることもあります。" },
+      { title: "4. 要件定義・画面仕様", content: "要件定義とは「何を作るか」を明文化することです。画面仕様はその要件を画面レベルで詳細化したものです。「ログイン画面にはメールアドレス入力欄・パスワード入力欄・送信ボタン・パスワード忘れリンクが必要」のように、画面ごとに必要な要素を列挙します。曖昧なままデザインに進むと手戻りが発生します。" },
+      { title: "5. UXライティング・ラベル設計", content: "UXライティングとは、ボタンのラベル・エラーメッセージ・ツールチップなど、インターフェース上の言葉を設計することです。「送信」より「申し込む」、「エラーが発生しました」より「メールアドレスの形式が正しくありません。@を含めて入力してください」の方がユーザーを助けます。言葉はデザインの一部です。" },
+      { title: "6. オブジェクトベース／タスクベース", content: "情報設計には2つのアプローチがあります。タスクベースは「何をするか（動詞）」中心の設計で、「予約する」「検索する」などの操作を軸にナビゲーションを組みます。オブジェクトベースは「何があるか（名詞）」中心の設計で、「商品」「注文」「ユーザー」などのモノを軸に整理します。デジタルサービスではオブジェクトベースが設計しやすい場合が多いです。" },
+      { title: "7. 画面レイアウト・トーン＆マナー", content: "画面レイアウトとは、情報の配置・優先順位・余白のルールです。トーン＆マナーとは、デザイン全体を通じた統一感のこと。フォント・色・角の丸み・余白のサイズなどを一貫させることで、ユーザーは「学習コスト」なしにサービスを使い続けられます。ワイヤーフレームの段階でレイアウトの基本ルールを決めておきます。" },
+      { title: "8. アクセシビリティ／ユニバーサルデザイン", content: "アクセシビリティとは、障害のある人・高齢者・異なる環境のユーザーがサービスを利用できることを保証する設計です。色のコントラスト比・文字サイズ・キーボード操作対応などが基準になります（WCAG）。ユニバーサルデザインはさらに広く、最初からあらゆる人が使えることを目指す思想です。アクセシビリティ対応は結果的にすべてのユーザーの体験を改善します。" }
+    ],
+    references: [
+      { title: "インフォメーション・アーキテクチャ", author: "Peter Morville / Louis Rosenfeld", desc: "情報設計の原典。「極グマ本」として知られる定番書" },
+      { title: "ウェブ戦略としての「ユーザーエクスペリエンス」", author: "Jesse James Garrett", desc: "5階層モデルの著者による情報設計の実践書" },
+      { title: "誰でも使えるウェブへ", author: "Sarah Horton / Whitney Quesenbery", desc: "アクセシビリティとユニバーサルデザインの実践ガイド" }
+    ],
+    worksheets: [
+      { id: "task1", title: "課題1：サイトマップとフロー図を作る", desc: "Module Dで選んだアイデアのサービスについて、サイトマップ（ページ構造）とユーザーフロー（主要な操作の流れ）をテキストで表現してください。", session: 1,
+        fields: [
+          { id: "sitemap", label: "サイトマップ：ページの階層構造（インデントで表現してOK）", type: "textarea" },
+          { id: "flow", label: "ユーザーフロー：主要タスクの画面遷移（例：トップ→検索→詳細→購入）", type: "textarea" },
+          { id: "missing", label: "気づいたこと：抜けている画面・行き止まりになる箇所はあるか", type: "textarea" }
+        ]
+      },
+      { id: "task2", title: "課題2：ラベルとエラーメッセージを改善する", desc: "自分がよく使うサービスの中で「わかりにくい言葉」を見つけ、UXライティングの観点から改善案を考えてください。", session: 2,
+        fields: [
+          { id: "service", label: "対象サービス名", type: "input" },
+          { id: "original", label: "気になったラベル・メッセージ（そのまま書く）", type: "textarea" },
+          { id: "problem", label: "なぜわかりにくいか", type: "textarea" },
+          { id: "improved", label: "改善案（言葉を書き直す）", type: "textarea" },
+          { id: "reason", label: "改善のポイント（何を変えたか・なぜその言葉にしたか）", type: "textarea" }
+        ]
+      }
+    ]
+  },
+  F: {
+    overview: "このモジュールでは、情報設計をもとに実際の画面をデザインする技法を学びます。「見た目を整える」のではなく「見た目で機能させる」ことが目的です。配置・余白・色・タイポグラフィの原則を理解し、Figmaを使ってプロトタイプを作るまでを身につけます。",
+    topics: [
+      { title: "1. UIデザイン／配置の5原則", content: "UIデザインの配置には5つの基本原則があります。①近接（関連する要素は近くに置く）、②整列（要素を見えない線に沿って並べる）、③反復（同じパターンを繰り返して統一感を出す）、④コントラスト（重要なものを目立たせる）、⑤余白（詰め込まず空間を意図的に使う）。この5原則を意識するだけで、画面の読みやすさは大きく変わります。" },
+      { title: "2. Figma／プロトタイプ機能", content: "FigmaはUIデザインの標準ツールです。フレーム・コンポーネント・オートレイアウトの3つが基本機能です。プロトタイプ機能を使うと、画面同士をリンクして実際の操作感をシミュレートできます。コードを書かずにインタラクションを確認できるため、開発前の検証に欠かせません。" },
+      { title: "3. ワイヤーフレーム作成", content: "ワイヤーフレームとは、色やフォントを使わずに画面の骨格だけを描いたものです。グレーのボックスとテキストだけで構成します。色やビジュアルを入れないことで「この配置は正しいか」「この情報量は適切か」に集中できます。ワイヤーフレームはビジュアルデザインの前に必ず作ります。" },
+      { title: "4. ナビゲーションデザイン", content: "ナビゲーションはユーザーが「今どこにいるか」「どこへ行けるか」を伝えるシステムです。グローバルナビゲーション（サイト全体）、ローカルナビゲーション（セクション内）、パンくずリスト（現在位置）など種類があります。良いナビゲーションは目立ちません。ユーザーが迷わないとき、ナビゲーションは透明になります。" },
+      { title: "5. インターフェースとインタラクション", content: "インターフェースとは、ユーザーとシステムが接する面全体です。インタラクションとは、ユーザーの操作に対してシステムがどう反応するかの設計です。ボタンを押したときの色変化、ローディングアニメーション、エラー時の揺れなど、細かいインタラクションがサービスの「使った感じ」を大きく左右します。" },
+      { title: "6. Refactoring UI", content: "Refactoring UIはAdam WathanとSteve Schoggerによるデザイン改善の考え方です。「階層をはっきりさせる」「色に頼らず形で伝える」「余白を大胆に取る」「システムフォントより適切なフォントを選ぶ」など、具体的な改善手法が多く紹介されています。デザインの「なぜこれが良く見えるのか」を言語化するのに役立ちます。" },
+      { title: "7. デザインガイドライン", content: "デザインガイドラインとは、色・フォント・余白・コンポーネントのルールをまとめたドキュメントです。チームで一貫したデザインを作るために必要です。AppleのHuman Interface Guidelines、GoogleのMaterial Designが代表例です。自分のプロジェクトでも、最初に小さなガイドラインを作ることで、後の作業が大幅にスムーズになります。" },
+      { title: "8. プロトタイプ制作", content: "プロトタイプとは「動く模型」です。忠実度（fidelity）によって紙・ワイヤーフレーム・高忠実度Figmaと使い分けます。目的は「作り込む前に学ぶ」こと。プロトタイプをユーザーに見せて反応を観察することで、開発前に設計の問題を発見できます。プロトタイプは捨てるために作るものです。" }
+    ],
+    references: [
+      { title: "Refactoring UI", author: "Adam Wathan / Steve Schoger", desc: "UIデザインの改善手法を具体的に解説。デザイナー必読の一冊" },
+      { title: "UIデザインの教科書", author: "原田秀司", desc: "日本語で読めるUI設計の体系的な入門書" },
+      { title: "About Face インタラクションデザインの本質", author: "Alan Cooper", desc: "インタラクションデザインの古典。ゴールダイレクテッドデザインの原典" }
+    ],
+    worksheets: [
+      { id: "task1", title: "課題1：ワイヤーフレームを言葉で描く", desc: "Module Eで設計したサービスの主要画面を1つ選び、ワイヤーフレームの内容をテキストで記述してください。Figmaがなくても、言葉で「何をどこに置くか」を考える練習です。", session: 1,
+        fields: [
+          { id: "screen", label: "対象の画面名", type: "input" },
+          { id: "purpose", label: "この画面でユーザーが達成したいこと", type: "textarea" },
+          { id: "elements", label: "画面に置く要素とその配置（上から順に記述）", type: "textarea" },
+          { id: "priority", label: "最も目立たせたい要素とその理由", type: "textarea" }
+        ]
+      },
+      { id: "task2", title: "課題2：UIの改善点を見つける", desc: "自分がよく使うサービスの画面を一つ選び、5原則（近接・整列・反復・コントラスト・余白）の観点から改善点を分析してください。", session: 2,
+        fields: [
+          { id: "service", label: "対象サービス名・画面名", type: "input" },
+          { id: "good", label: "うまく機能している点（5原則のどれが効いているか）", type: "textarea" },
+          { id: "bad", label: "改善できそうな点（5原則のどれが弱いか）", type: "textarea" },
+          { id: "proposal", label: "具体的な改善案", type: "textarea" }
+        ]
+      }
+    ]
+  },
+  G: {
+    overview: "このモジュールでは、作ったデザインをユーザーに試してもらい、問題を発見する技法を学びます。ユーザビリティテストは「評価」ではなく「学習」のためのツールです。5人に試してもらうだけで、主要な問題の85%が発見できると言われています。",
+    topics: [
+      { title: "1. 検証リサーチ概論", content: "検証リサーチとは「この設計は正しいか」を確認するためのリサーチです。Module Cの探索リサーチとは目的が異なります。探索は「何が問題か」を見つけるもの、検証は「この解決策は機能するか」を確かめるものです。ユーザビリティテストは検証リサーチの代表的な手法で、プロトタイプや実際のサービスをユーザーに操作してもらい、観察します。" },
+      { title: "2. プロトタイピング検証", content: "プロトタイプの検証とは、設計の仮説をユーザーの行動データで確かめることです。「このボタンは押してもらえるか」「このフローは完了できるか」を観察します。重要なのは「このデザインは気に入りましたか？」と聞くのではなく、実際に操作してもらうことです。人は言葉と行動が一致しないため、行動の観察が本質です。" },
+      { title: "3. デモンストレーション", content: "テスト本番の前に、参加者にテストの進め方を説明するデモンストレーションが必要です。「これはあなたを評価するものではなく、デザインを評価するものです」という説明が心理的安全性を高めます。また「操作しながら頭の中で考えていることを声に出してください（Think Aloud）」という指示が、観察で得られる情報を豊かにします。" },
+      { title: "4. タスク作成／タスクのレビュー", content: "ユーザビリティテストではユーザーに「タスク」を渡します。タスクとは「○○してください」という具体的な課題です。良いタスクの条件は、①現実的な状況設定がある、②答えを誘導しない、③完了基準が明確、の3つです。「検索機能を使ってください」ではなく「東京から大阪への新幹線を明日の朝予約してください」のように書きます。" },
+      { title: "5. ユーザビリティテスト実査", content: "テスト当日は、モデレーター（進行役）とオブザーバー（観察記録役）に分かれます。モデレーターはユーザーの操作を誘導せず、詰まったときも「どうしたいですか？」と聞くだけにします。オブザーバーは「どこで迷ったか」「何を読まなかったか」「表情がどう変わったか」を記録します。テスト後に振り返りセッションを必ず行います。" },
+      { title: "6. 検証リサーチ分析方法", content: "テスト結果を分析するには、観察した問題点を「発生した箇所」「深刻度」「頻度」で整理します。深刻度は①タスク失敗（致命的）、②大幅に遅れる（重大）、③戸惑うが完了できる（軽微）の3段階で分類するのが一般的です。全問題を解決しようとせず、深刻度と頻度の高いものから優先的に対処します。" },
+      { title: "7. プロトタイピング改善", content: "テスト結果をもとにプロトタイプを改善します。重要なのは「ユーザーが言ったこと」ではなく「ユーザーが詰まった箇所」をもとに改善することです。ユーザーの提案をそのまま実装するのではなく、「なぜ詰まったのか」という根本原因を探り、設計で解決します。改善後は再びテストして検証するサイクルを回します。" },
+      { title: "8. プレゼンテーション／講評", content: "テスト結果と改善案をチームやクライアントにプレゼンするスキルも重要です。「ユーザーはここで詰まりました」という事実と、「なぜそれが起きたか」という分析と、「どう改善するか」という提案の3点セットで伝えます。ユーザーの声や行動の動画クリップは、データよりも説得力を持ちます。" }
+    ],
+    references: [
+      { title: "やさしいユーザビリティ評価", author: "樽本徹也", desc: "日本語で読めるユーザビリティテストの実践書。現場の手順が詳しい" },
+      { title: "Rocket Surgery Made Easy", author: "Steve Krug", desc: "ユーザビリティテストを簡単に実施するための実践ガイド" },
+      { title: "Don't Make Me Think", author: "Steve Krug", desc: "ウェブユーザビリティの古典。直感的なデザインとは何かを学ぶ" }
+    ],
+    worksheets: [
+      { id: "task1", title: "課題1：テストタスクを作る", desc: "Module Fで作ったプロトタイプ（または自分がよく使うサービス）に対して、ユーザビリティテスト用のタスクを2つ作ってください。", session: 1,
+        fields: [
+          { id: "service", label: "テスト対象のサービス・プロトタイプ名", type: "input" },
+          { id: "task1", label: "タスク1（現実的な状況設定を含めて書く）", type: "textarea" },
+          { id: "task1goal", label: "タスク1の完了基準（何ができたら成功か）", type: "textarea" },
+          { id: "task2", label: "タスク2（現実的な状況設定を含めて書く）", type: "textarea" },
+          { id: "task2goal", label: "タスク2の完了基準（何ができたら成功か）", type: "textarea" }
+        ]
+      },
+      { id: "task2", title: "課題2：観察記録と改善提案", desc: "自分または身近な人に課題1のタスクを試してもらい、観察結果を記録して改善案を考えてください。一人でも構いません。", session: 2,
+        fields: [
+          { id: "observation", label: "観察記録：どこで詰まったか、何を読まなかったか", type: "textarea" },
+          { id: "severity", label: "最も深刻だった問題とその理由", type: "textarea" },
+          { id: "cause", label: "根本原因の分析（なぜその問題が起きたか）", type: "textarea" },
+          { id: "improvement", label: "改善案（設計レベルでどう変えるか）", type: "textarea" }
+        ]
+      }
+    ]
+  },
+  H: {
+    overview: "このモジュールでは、UXリサーチを学術的な視点から捉え直します。実践的な手法を使いこなすためには、その背景にある理論や歴史を知ることが重要です。なぜその手法が有効なのか、どんな限界があるのかを理解することで、リサーチの質が上がります。",
+    topics: [
+      { title: "1. UXリサーチとプロダクトデザイン", content: "UXリサーチはプロダクトデザインの意思決定を支える活動です。「何を作るか」「誰のために作るか」「作ったものは機能しているか」という問いに対して、データと根拠を提供します。リサーチなしの設計は、デザイナーの思い込みをそのまま製品にしてしまうリスクがあります。リサーチはコストではなく、手戻りを減らすための投資です。" },
+      { title: "2. UXリサーチの活用・事例", content: "UXリサーチはスタートアップから大企業まで、様々な場面で活用されています。Googleは週次でユーザーテストを行い、Airbnbはコンテキスチュアルインクワイアリーで旅行者の本音を発見しました。重要なのはリサーチの規模ではなく頻度と目的の明確さです。小さくても継続的なリサーチが、設計判断の根拠を積み上げます。" },
+      { title: "3. 探索型リサーチ／検証型リサーチ", content: "Module Cで学んだ2種類のリサーチを、学術的な視点から深めます。探索型は帰納的アプローチ（観察→パターン発見→仮説生成）、検証型は演繹的アプローチ（仮説→検証→結論）です。デザインプロセスの前半は探索、後半は検証が中心になりますが、実際のプロジェクトでは両者を往復することが多いです。" },
+      { title: "4. 定量調査／定性調査", content: "定量調査は「どのくらい」を数値で明らかにします（アンケート・アクセス解析・A/Bテスト）。定性調査は「なぜ」「どのように」を言葉や行動で明らかにします（インタビュー・観察・日記法）。どちらが優れているのではなく、問いに合わせて選びます。定量で「何が起きているか」を把握し、定性で「なぜそれが起きているか」を理解する組み合わせが有効です。" },
+      { title: "5. デスクリサーチの手法", content: "デスクリサーチとは、ユーザーに直接接触せずに既存の情報から知見を得るリサーチです。先行研究・競合分析・業界レポート・SNS分析などが含まれます。ユーザーインタビューの前にデスクリサーチを行うことで、「すでに知られていること」と「まだわかっていないこと」を整理でき、インタビューの質が上がります。" },
+      { title: "6. UXリサーチの歴史", content: "UXリサーチの起源は1940〜50年代の人間工学（Ergonomics）に遡ります。工場や軍の装備設計で「人間に合わせた設計」の重要性が認識されました。1980〜90年代にパソコンの普及とともにHCI（Human-Computer Interaction）が発展し、Jakob NielsenやDon Normanらがユーザビリティの概念を広めました。2000年代以降はUXという言葉が定着し、リサーチ手法も多様化しています。" },
+      { title: "7. UXリサーチと文化人類学", content: "UXリサーチの手法の多くは、文化人類学のフィールドワークから影響を受けています。エスノグラフィー（人々の生活を現場で観察・記録する手法）は、コンテキスチュアルインクワイアリーの原型です。「ユーザーの言葉ではなく行動を見る」「文脈の中で意味を理解する」という姿勢は、文化人類学のアプローチそのものです。" },
+      { title: "8. 関連する学術分野・視点", content: "UXデザインは複数の学術分野が交差する領域です。認知心理学（人間の知覚・記憶・判断のメカニズム）、社会学（人間の行動と社会構造の関係）、情報工学（システムの設計と実装）、デザイン学（形と機能の統合）が主な隣接領域です。これらを横断的に学ぶことで、単一の視点では見えない問題を発見できるようになります。" }
+    ],
+    references: [
+      { title: "誰のためのデザイン？", author: "Don Norman", desc: "UXデザインの原点。アフォーダンス・フィードバック・メンタルモデルの概念を平易に解説" },
+      { title: "HCIの教科書", author: "Jenny Preece / Yvonne Rogers / Helen Sharp", desc: "Human-Computer Interactionの学術的な入門書。UXリサーチの理論的基盤を学べる" },
+      { title: "リサーチ・デザイン", author: "John W. Creswell", desc: "定量・定性・混合研究法の選び方と設計を体系的に解説した研究方法論の標準書" }
+    ],
+    worksheets: [
+      { id: "task1", title: "課題1：定量と定性を使い分ける", desc: "自分がよく使うサービスについて、「改善したい問題」を一つ設定し、定量調査と定性調査それぞれでどう調べるかを考えてください。", session: 1,
+        fields: [
+          { id: "service", label: "対象サービス名", type: "input" },
+          { id: "problem", label: "改善したい問題・疑問", type: "textarea" },
+          { id: "quant", label: "定量調査でわかること・調べ方", type: "textarea" },
+          { id: "qual", label: "定性調査でわかること・調べ方", type: "textarea" },
+          { id: "combo", label: "2つを組み合わせるとどんな理解が得られるか", type: "textarea" }
+        ]
+      },
+      { id: "task2", title: "課題2：デスクリサーチをやってみる", desc: "Module Cで選んだサービスについて、既存の情報（公式サイト・レビュー・ニュース・競合など）を調べ、「すでに知っていること」と「まだわからないこと」を整理してください。", session: 2,
+        fields: [
+          { id: "service", label: "対象サービス名", type: "input" },
+          { id: "known", label: "デスクリサーチでわかったこと（箇条書きでOK）", type: "textarea" },
+          { id: "unknown", label: "まだわからないこと・ユーザーに直接聞かないとわからないこと", type: "textarea" },
+          { id: "next", label: "次に行うべきリサーチの手法と理由", type: "textarea" }
+        ]
+      }
+    ]
+  },
+  I: {
+    overview: "このモジュールでは、UXリサーチを実際に「やる」技法を学びます。Module Hで理論を学んだ上で、リサーチプランの立て方・インタビューの実施・分析・ユーザーモデリングまでを一通り実践します。手を動かすことで初めてわかることがたくさんあります。",
+    topics: [
+      { title: "1. リサーチプラン／調査企画", content: "リサーチプランとは、リサーチの目的・方法・対象・スケジュールをまとめた計画書です。①リサーチクエスチョン（何を明らかにしたいか）、②手法（インタビュー・観察・アンケートなど）、③対象者の条件（誰に聞くか）、④サンプル数、⑤スケジュールを事前に決めます。計画なしに始めると、終わってから「何を得たのかわからない」状態になります。" },
+      { title: "2. インタビューフロー設計", content: "インタビューのフローは「アイスブレイク→背景の確認→メインの質問→深掘り→クロージング」という構成が基本です。最初に緊張をほぐし、相手の状況を把握してからメインの質問に入ります。質問は大きい問いから小さい問いへ絞り込む「ファネル構造」で設計します。1回のインタビューで聞けることは限られるので、優先順位をつけておくことが重要です。" },
+      { title: "3. リクルーティング", content: "リクルーティングとは、インタビューに参加してもらうユーザーを集めることです。条件（年齢・職業・サービス利用経験など）を明確にし、その条件に合う人を探します。知人・SNS・リクルーティングサービスなど方法はさまざまです。重要なのは「想定ユーザーに近い人」を集めることで、条件が曖昧だと得られるインサイトも曖昧になります。" },
+      { title: "4. ユーザーインタビュー実査", content: "インタビュー当日は、録音の許可を取り、Think Aloud（考えを声に出してもらう）を促します。モデレーターは「なぜ？」「もう少し詳しく教えてください」という深掘り質問を繰り返します。沈黙を恐れず待つことも重要です。ユーザーが話し終わる前に次の質問をすると、重要な発言を切り上げてしまいます。インタビュー後は速やかにメモを整理します。" },
+      { title: "5. インタビュー内容の分析", content: "インタビュー後は、発言・行動・感情を1件ずつカードに書き出し、アフィニティダイアグラムで整理します。似たカードをグループにまとめ、グループに名前をつけることでパターンが見えてきます。重要なのは「ユーザーが言ったこと」だけでなく「ユーザーがやっていること」「ユーザーが感じていること」も分析の対象にすることです。" },
+      { title: "6. ユーザーモデリング", content: "リサーチ結果をもとに、ペルソナ・カスタマージャーニーマップ・メンタルモデルなどのユーザーモデルを作ります。ユーザーモデルは「リサーチの要約」ではなく「設計の道具」として作ります。チームが「このペルソナならどう感じるか？」と問いかけながら設計の意思決定ができる状態を目指します。" },
+      { title: "7. ユーザーセグメント分析手法", content: "ユーザーは一種類ではありません。目的・行動パターン・使い方の違いによってセグメント（グループ）に分けられます。セグメント分析では「どんな違いが設計上重要か」を判断することが鍵です。年齢や性別より、「サービスへの関与度」や「目的の明確さ」などの行動軸でセグメントする方が、設計に役立つことが多いです。" },
+      { title: "8. カスタマージャーニーマップ（CJM）作成", content: "カスタマージャーニーマップは、ペルソナがサービスを通じた一連の体験を時系列で可視化したものです。横軸に「フェーズ（知る・試す・使う・続ける）」、縦軸に「行動・思考・感情・タッチポイント・課題」を整理します。感情の上下を折れ線グラフで描くことで、体験のピークと谷が視覚的にわかります。改善すべき箇所を見つけるための地図です。" }
+    ],
+    references: [
+      { title: "ユーザーインタビューをはじめよう", author: "Steve Portigal", desc: "インタビューの実施から分析まで。実践的なガイドとして繰り返し参照できる一冊" },
+      { title: "フィールドワーク入門", author: "佐藤郁哉", desc: "観察・インタビューの基本を社会学の視点から解説。リサーチの姿勢を学ぶのに最適" },
+      { title: "Mapping Experiences", author: "Jim Kalbach", desc: "カスタマージャーニーマップ・サービスブループリントなどの可視化手法を網羅した実践書" }
+    ],
+    worksheets: [
+      { id: "task1", title: "課題1：インタビューフローを設計する", desc: "自分がよく使うサービスについて、ユーザーインタビューのフローを設計してください。実際に誰かに試してみることを想定して作ります。", session: 1,
+        fields: [
+          { id: "service", label: "対象サービス名", type: "input" },
+          { id: "rq", label: "リサーチクエスチョン（このインタビューで何を明らかにしたいか）", type: "textarea" },
+          { id: "icebreak", label: "アイスブレイク：最初に聞く背景確認の質問（2〜3問）", type: "textarea" },
+          { id: "main", label: "メイン質問（3〜5問、オープンクエスチョンで）", type: "textarea" },
+          { id: "drill", label: "深掘り用の質問（「なぜ？」「もう少し詳しく」以外で）", type: "textarea" }
+        ]
+      },
+      { id: "task2", title: "課題2：カスタマージャーニーマップを作る", desc: "課題1のインタビューを実施（または自分自身の体験をもとに）、カスタマージャーニーマップを作成してください。", session: 2,
+        fields: [
+          { id: "persona", label: "対象ペルソナ（名前・状況・目的）", type: "textarea" },
+          { id: "phases", label: "フェーズの流れ（知る→〜→終わりまで）", type: "textarea" },
+          { id: "actions", label: "各フェーズでの行動・思考・感情（箇条書きでOK）", type: "textarea" },
+          { id: "pain", label: "最も感情が下がる瞬間（痛点）とその原因", type: "textarea" },
+          { id: "opportunity", label: "設計の機会：どこを改善すれば体験が大きく変わるか", type: "textarea" }
+        ]
+      }
+    ]
+  },
+  J: {
+    overview: "このモジュールは20週間のプログラムの最終章です。リサーチで得たデータを分析・活用し、ビジネスや設計の意思決定に繋げる技法を学びます。仮説の生成と検証、インサイトの言語化、プレゼンテーションまでを通して、UXデザイナーとしての思考の全体像を完成させます。",
+    topics: [
+      { title: "1. 仮説生成／仮説検証の組み合わせ", content: "良いUXデザインは「仮説を立て、検証し、学ぶ」サイクルの繰り返しです。仮説生成は探索リサーチから生まれ、仮説検証は定量調査やユーザビリティテストで行います。重要なのは「仮説を持たずにデータを集める」でも「データを見ずに仮説で進む」でもなく、両者を往復し続けることです。仮説が崩れることも、重要な学びです。" },
+      { title: "2. 分析対象／変数設計／分析ツール", content: "データ分析を始める前に、「何を分析するか（分析対象）」「何を測るか（変数）」「どのツールを使うか」を決めます。UXの文脈では、タスク完了率・エラー率・完了時間・NPS・離脱率などが代表的な変数です。ツールはGoogleアナリティクス・Mixpanel・Hotjarなどが広く使われます。ツールを先に決めるのではなく、問いを先に決めることが原則です。" },
+      { title: "3. 相関関係／因果関係／効果測定", content: "「AとBに相関がある」と「AがBを引き起こす」は全く別の意味です。データ分析でよくある誤りは、相関を因果と混同することです。例えば「ボタンを赤にしたらCVRが上がった」は相関であり、「赤いボタンがCVRを上げた」と断言するには他の要因を排除した実験設計が必要です。A/Bテストは因果を検証するための代表的な手法です。" },
+      { title: "4. ワークショップデザイン", content: "リサーチ結果をチームで活用するためには、ワークショップが有効です。ワークショップとは、参加者が協働して問題を定義・発散・収束する場です。UXリサーチの文脈では、インサイト共有・アフィニティダイアグラム・HMW問いの生成・優先順位決定などをワークショップ形式で行います。デザイナーだけでなく、エンジニア・PMが同じリサーチ結果を共有することで、チームの意思決定の質が上がります。" },
+      { title: "5. ミッション／ビジョン／バリュー", content: "UXデザインの最終的な方向性は、サービスのミッション（存在意義）・ビジョン（目指す未来）・バリュー（価値観）によって決まります。リサーチで発見したユーザーニーズとサービスのミッションが噛み合っているとき、強いプロダクトが生まれます。「ユーザーが欲しいもの」と「私たちが届けたいもの」の重なりを見つけることが、戦略設計の核心です。" },
+      { title: "6. 顧客インサイト／差別化／ストーリーの構築", content: "インサイトとは「ユーザーが言葉にしていない、本質的なニーズや動機」です。競合との差別化は、このインサイトの深さによって決まります。表面的なニーズ（速い・安い・便利）は競合も対応できますが、深いインサイトから生まれた価値提案は模倣しにくいです。また、インサイトをストーリーとして語ることで、チームやクライアントを動かす力が生まれます。" },
+      { title: "7. 提案内容の選定・具体化", content: "リサーチからインサイトを得たあと、「何を改善するか」を選定します。すべての問題を解決しようとするのではなく、「ユーザーへの影響が大きい」「実現可能性が高い」「ビジネス目標と合っている」の3軸で優先順位をつけます。選んだ提案を具体化するときは、Module DのHMW問い・Module EのUSM・Module Fのプロトタイプへと繋げていきます。" },
+      { title: "8. プレゼンテーション／講評", content: "リサーチの価値は、発見したインサイトを「伝える」ことで初めて実現されます。プレゼンテーションの構成は「問い→方法→発見→インサイト→提案」の順が基本です。データや発言の引用は証拠として有効ですが、最終的に伝えるのは「だからこう設計する」という判断です。聞き手が「なるほど、それなら変えよう」と思えるストーリーを作ることが目標です。" }
+    ],
+    references: [
+      { title: "Lean Analytics", author: "Alistair Croll / Benjamin Yoskovitz", desc: "データ分析をプロダクト改善に活かすための考え方と指標設計の実践書" },
+      { title: "Storytelling with Data", author: "Cole Nussbaumer Knaflic", desc: "データをビジュアルと言葉でわかりやすく伝えるためのデザイン思考" },
+      { title: "ジョブ理論", author: "Clayton Christensen", desc: "Jobs to be Done理論の原典。顧客インサイトと差別化の本質を学ぶ" }
+    ],
+    worksheets: [
+      { id: "task1", title: "課題1：インサイトをストーリーにする", desc: "これまでのモジュールで分析してきたサービスについて、リサーチから得た最も重要なインサイトを1つ選び、チームに伝えるためのストーリーとして整理してください。", session: 1,
+        fields: [
+          { id: "service", label: "対象サービス名", type: "input" },
+          { id: "insight", label: "最も重要なインサイト（ユーザーの本質的なニーズや動機）", type: "textarea" },
+          { id: "evidence", label: "そのインサイトの根拠（観察・発言・データ）", type: "textarea" },
+          { id: "story", label: "ストーリーとして語る（問い→発見→意味→提案の流れで）", type: "textarea" }
+        ]
+      },
+      { id: "task2", title: "課題2：20週間の学びを振り返る", desc: "Module AからJまでを通じて、自分の設計思想がどう変わったかを振り返ってください。Bokanや自分のプロジェクトへの接続も含めて書いてください。", session: 2,
+        fields: [
+          { id: "before", label: "学習前の自分：UX/UIデザインをどう理解していたか", type: "textarea" },
+          { id: "after", label: "学習後の自分：何が変わったか・何が見えるようになったか", type: "textarea" },
+          { id: "key", label: "最も印象に残ったモジュール・概念とその理由", type: "textarea" },
+          { id: "next", label: "これからの自分：何を深め、どう実践するか", type: "textarea" }
+        ]
+      }
+    ]
+  }
+};
+
+// Mokumoku SVGs
+const MOKUMOKU_NORMAL = `<svg width="36" height="32" viewBox="0 0 44 36"><mask id="eyeMaskN"><rect width="100%" height="100%" fill="white"/><circle cx="24" cy="16" r="2" fill="black"/><circle cx="30" cy="18" r="2" fill="black"/></mask><g mask="url(#eyeMaskN)"><ellipse cx="10" cy="22" rx="9" ry="8" fill="#b8956a"/><ellipse cx="22" cy="16" rx="14" ry="12" fill="#b8956a"/><ellipse cx="36" cy="22" rx="8" ry="7" fill="#b8956a"/><ellipse cx="16" cy="26" rx="10" ry="8" fill="#b8956a"/><ellipse cx="30" cy="26" rx="10" ry="8" fill="#b8956a"/></g><path d="M14 23 L15 27 L18 25" stroke="#0a0a0a" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>`;
+const MOKUMOKU_HAPPY = `<svg width="36" height="32" viewBox="0 0 44 36"><mask id="eyeMaskH"><rect width="100%" height="100%" fill="white"/><circle cx="24" cy="16" r="2.5" fill="black"/><circle cx="30" cy="18" r="2.5" fill="black"/></mask><g mask="url(#eyeMaskH)"><ellipse cx="10" cy="22" rx="9" ry="8" fill="#b8956a"/><ellipse cx="22" cy="16" rx="14" ry="12" fill="#b8956a"/><ellipse cx="36" cy="22" rx="8" ry="7" fill="#b8956a"/><ellipse cx="16" cy="26" rx="10" ry="8" fill="#b8956a"/><ellipse cx="30" cy="26" rx="10" ry="8" fill="#b8956a"/></g><path d="M13 22 L15 27 L19 24" stroke="#0a0a0a" stroke-width="1.5" fill="none" stroke-linecap="round"/><ellipse cx="12" cy="20" rx="2" ry="1" fill="#d4a574" opacity="0.6"/></svg>`;
+const MOKUMOKU_SUPER = `<svg width="36" height="32" viewBox="0 0 44 36"><mask id="eyeMaskS"><rect width="100%" height="100%" fill="white"/><circle cx="24" cy="16" r="3" fill="black"/><circle cx="30" cy="18" r="3" fill="black"/></mask><g mask="url(#eyeMaskS)"><ellipse cx="10" cy="22" rx="9" ry="8" fill="#b8956a"/><ellipse cx="22" cy="16" rx="14" ry="12" fill="#b8956a"/><ellipse cx="36" cy="22" rx="8" ry="7" fill="#b8956a"/><ellipse cx="16" cy="26" rx="10" ry="8" fill="#b8956a"/><ellipse cx="30" cy="26" rx="10" ry="8" fill="#b8956a"/></g><path d="M12 21 L15 28 L20 23" stroke="#0a0a0a" stroke-width="2" fill="none" stroke-linecap="round"/><ellipse cx="11" cy="19" rx="3" ry="1.5" fill="#d4a574" opacity="0.7"/><text x="8" y="8" font-size="8" fill="#d4a574">♪</text></svg>`;
+const MOKUMOKU_MSG = `<svg width="48" height="40" viewBox="0 0 44 36"><mask id="eyeMaskMsg"><rect width="100%" height="100%" fill="white"/><circle cx="24" cy="16" r="2" fill="black"/><circle cx="30" cy="18" r="2" fill="black"/></mask><g mask="url(#eyeMaskMsg)"><ellipse cx="10" cy="22" rx="9" ry="8" fill="#b8956a"/><ellipse cx="22" cy="16" rx="14" ry="12" fill="#b8956a"/><ellipse cx="36" cy="22" rx="8" ry="7" fill="#b8956a"/><ellipse cx="16" cy="26" rx="10" ry="8" fill="#b8956a"/><ellipse cx="30" cy="26" rx="10" ry="8" fill="#b8956a"/></g><path d="M14 23 L15 27 L18 25" stroke="#0a0a0a" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>`;
+
+// Notes data
+const NOTES = {
+  '2026-03-05': [
+    { file: '2026-03-05-session1.pdf', title: 'Module A Session 1 ノート' },
+    { file: '2026-03-05-5layers.pdf', title: '【補足】UX 5階層モデル完全解説' }
+  ],
+  '2026-03-07': [
+    { file: '2026-03-07-session3.pdf', title: 'Module A Session 3 ノート' }
+  ],
+  '2026-03-08': [
+    { file: '2026-03-08-leaflet-kousatu.pdf', title: 'リーフレット課題 考察ノート' }
+  ],
+  '2026-03-11': [
+    { file: '2026-03-11-ModuleB_01.pdf', title: 'Module B 行動経済学認知社会学' }
+  ],
+  '2026-03-12': [
+    { file: '2026-03-12-brandUIUX01.pdf', title: 'ブランディングとUI/UXの関係' },
+    { file: '2026-03-12-brandUIUX02.pdf', title: '思想としてのデザイン' },
+    { file: '2026-03-12-ModuleB_02.pdf', title: 'Module B — Session 2 学習ノート' },
+  ],
+  
+  '2026-03-14': [
+  { file: '2026-03-14-ModuleA_recap.pdf',title: 'Module A おさらいノート' },
+
+],
+};
+
+function showNotePopup(dateStr) {
+  const notes = NOTES[dateStr];
+  if (!notes || notes.length === 0) return;
+  
+  closeNotePopup();
+  
+  const overlay = document.createElement('div');
+  overlay.className = 'note-popup-overlay';
+  overlay.onclick = closeNotePopup;
+  
+  const popup = document.createElement('div');
+  popup.className = 'note-popup';
+  
+  let html = `<p class="note-popup-date">${dateStr}</p>`;
+  notes.forEach(note => {
+    html += `<p class="note-popup-title">📝 ${note.title}</p>`;
+    html += `<button class="note-popup-btn" onclick="window.open('notes/${note.file}', '_blank')">開く</button>`;
+  });
+  html += `<button class="note-popup-btn" onclick="closeNotePopup()">閉じる</button>`;
+  
+  popup.innerHTML = html;
+  document.body.appendChild(overlay);
+  document.body.appendChild(popup);
+}
+
+function closeNotePopup() {
+  const overlay = document.querySelector('.note-popup-overlay');
+  const popup = document.querySelector('.note-popup');
+  if (overlay) overlay.remove();
+  if (popup) popup.remove();
+}
+
+// Quiz Questions
+const QUIZ_QUESTIONS = {
+  beginner: [
+    {category:'UX基礎',text:'UXデザインとUIデザインの違いとして最も正確なものはどれですか？',options:['UXとUIは同じ意味','UIは見た目、UXは体験全体','UXはグラフィック','UIはUXより上位'],correct:1,explanation:'UIはボタン・フォーム・ナビゲーションなど、ユーザーが直接触れる「接点」のデザインです。一方UXは、サービスを通じてユーザーが得る「体験全体」のデザイン。UIはUXの一部であり、UXはUIを含むより広い概念です。'},
+    {category:'UX時間軸',text:'サービスを「使う前の期待」はUXのどの段階？',options:['一時的UX','エピソード的UX','予期的UX','累積的UX'],correct:2,explanation:'予期的UXは使用前の期待や想像です。広告を見たとき、友人から聞いたとき、アプリをダウンロードする前の「きっとこうだろう」という期待がこれにあたります。'},
+    {category:'人間中心設計',text:'人間中心設計のプロセスとして正しいものは？',options:['デザイン→リリース→評価','利用状況の理解→要求定義→設計→評価','要件定義→開発→テスト','リサーチは最後に行う'],correct:1,explanation:'ISO 9241-210で定義された人間中心設計は「利用状況の理解→ユーザー要求の明確化→設計による解決案→評価」というサイクルを繰り返します。一方向ではなく、評価結果を次の理解に活かす循環が特徴です。'},
+    {category:'UX 5階層',text:'UX 5階層モデルで最も基盤にあるのは？',options:['表層','骨格','構造','戦略'],correct:3,explanation:'戦略（Strategy）が最も根本にある層です。「誰のために、何を提供するか」というユーザーニーズとビジネス目標がここで定義されます。この土台が不安定だと、上の層をいくら整えても良いUXにはなりません。'},
+    {category:'UX 5階層',text:'5階層モデルの「表層」が扱うのは？',options:['ユーザーニーズ','情報の組織化','視覚的なデザイン','機能と要件'],correct:2,explanation:'表層（Surface）は色、フォント、画像、アイコンなど目に見えるビジュアルデザインを扱います。最も上の層であり、ユーザーが最初に目にする部分ですが、下の層がしっかりしていないと「見た目だけ良い」デザインになってしまいます。'},
+    {category:'開発手法',text:'Lean UXの特徴として正しいものは？',options:['要件を最初に決める','仮説を最小限で検証','別々に進める','完成後にテスト'],correct:1,explanation:'Lean UXは「仮説→最小限のプロトタイプ（MVP）→検証→学び」という短いサイクルを繰り返します。完璧なものを作ってからテストするのではなく、早い段階でユーザーに見せて学ぶことを重視します。'},
+    {category:'体験価値',text:'「体験価値」の正しい説明は？',options:['製品の価格','機能的価値のみ','機能的＋感情的な価値','見た目の美しさ'],correct:2,explanation:'体験価値は「タスクを完了できる」という機能的な価値だけでなく、「楽しい」「信頼できる」「誇らしい」という感情的な価値も含みます。UXデザインはこの両方を設計する行為です。'},
+    {category:'サービスデザイン',text:'サービスデザインが扱う対象は？',options:['画面デザインのみ','人・プロセス・場所を含む全体','ITアーキテクチャ','B2Cのみ'],correct:1,explanation:'サービスデザインは画面だけでなく、人（スタッフ・顧客）、プロセス（業務フロー）、場所（店舗・オンライン）を含めたサービス全体の体験を設計します。寺院で言えば、参拝者だけでなく住職や檀家、法要の流れ、境内の動線まで含まれます。'},
+    {category:'UX時間軸',text:'長期間使い続けた結果の印象は？',options:['予期的UX','一時的UX','エピソード的UX','累積的UX'],correct:3,explanation:'累積的UX（Cumulative UX）は繰り返し使い続けた結果として形成される総合印象です。「このアプリはやっぱり使いやすい」「このサービスは信頼できる」という長期的な評価がこれにあたります。'},
+    {category:'人間中心設計',text:'人間中心設計で最も重要な出発点は？',options:['技術的実現可能性','競合分析','ユーザーと利用状況の理解','ビジネス目標'],correct:2,explanation:'人間中心設計はユーザーと利用状況の理解から始まります。「誰が」「どんな状況で」「何のために」使うかを理解せずに良いUXは設計できません。技術や競合分析も重要ですが、まずユーザーを知ることが出発点です。'}
+  ],
+  intermediate: [
+    {category:'認知心理学',text:'ピークエンドの法則の教訓は？',options:['体験の平均が印象を決める','ピークと終了時が全体印象を決める','最初の印象だけ重要','長さが満足度を決める'],correct:1,explanation:'ダニエル・カーネマンの研究によると、人は体験全体の平均ではなく、最も強烈な瞬間（ピーク）と最後の瞬間（エンド）で体験を評価します。つまり「感動的な瞬間を作る」「最後をポジティブに終わらせる」ことがUX設計で効果的です。'},
+    {category:'リサーチ',text:'探索的リサーチと検証的リサーチの違いは？',options:['同じ意味','探索は発見、検証は確認','検証は定量のみ','探索は終了後'],correct:1,explanation:'探索的リサーチは「何が問題か」「ユーザーは何を求めているか」を発見するために行います。検証的リサーチは「この解決策は正しいか」を確認するために行います。プロジェクトの前半は探索、後半は検証が多くなります。'},
+    {category:'UX概念',text:'認知負荷を下げるために正しくないのは？',options:['グループ化する','多くの選択肢を提示','段階的な開示','視覚的階層を明確に'],correct:1,explanation:'選択肢が多すぎると認知負荷が増し、「決断疲れ」（Decision Fatigue）が起こります。ヒックの法則によれば、選択肢が増えると意思決定に時間がかかります。良いUXは必要な情報を必要なタイミングで提示し、ユーザーの思考コストを下げます。'},
+    {category:'UXプロセス',text:'ペルソナを作成する目的は？',options:['代わりにインタビュー','ユーザー像を共有し意思決定基準に','マーケ資料作成','コスト見積もり'],correct:1,explanation:'ペルソナはリサーチを元にした仮想のユーザー像です。チーム全員が「このペルソナならどう感じるか？」という共通の問いを持つことで、意思決定の基準が揃います。個人の好みではなく、ユーザー視点で判断できるようになります。'},
+    {category:'UX概念',text:'カスタマージャーニーマップが示すのは？',options:['ページ構造','時系列の体験・感情・接点','ビジュアル方向性','データフロー'],correct:1,explanation:'カスタマージャーニーマップはユーザーがサービスを利用する一連の体験を時系列で可視化します。各タッチポイントでの行動・思考・感情・課題を整理し、改善機会を発見するツールです。「いつ」「何が」起きているかを俯瞰できます。'},
+    {category:'情報設計',text:'情報アーキテクチャの目的は？',options:['ビジュアルを整える','情報を迷わず見つけられるよう組織化','DB設計','コンテンツ作成'],correct:1,explanation:'情報アーキテクチャ（IA）はユーザーが「どこに何があるか」を直感的に理解できるよう情報を整理・分類・命名する設計です。サイトマップ、ナビゲーション設計、ラベル設計が主な作業です。見た目の前に「構造」を設計します。'},
+    {category:'認知心理学',text:'ヒックの法則がUIに与える示唆は？',options:['選択肢を増やすと満足','選択肢を絞ると意思決定が速い','色を減らす','文字を大きく'],correct:1,explanation:'ヒックの法則は「選択肢が増えるほど意思決定に時間がかかる」という法則です。ナビゲーションの項目数を絞る、段階的に選択させる、デフォルト値を設定するなど、選択の負担を減らす設計が効果的です。'},
+    {category:'UXプロセス',text:'プロトタイプの忠実度について正しいのは？',options:['高忠実度が常に良い','目的に合わせて使い分ける','低忠実度は無意味','コードだけがプロトタイプ'],correct:1,explanation:'初期段階は紙や白黒のワイヤーフレーム（低忠実度）で素早くアイデアを検証。詳細検討にはビジュアルデザイン付きの高忠実度プロトタイプが有効。目的と段階で使い分けることが重要です。高忠実度は作るのに時間がかかるので、初期には向きません。'},
+    {category:'UX概念',text:'フィードバックがUXで重要な理由は？',options:['デザイナーへの意見','操作が受付されたか伝え不安解消','レビュー収集','コード品質'],correct:1,explanation:'ユーザーが操作したとき、「その操作は受け付けられた」「処理中だ」「完了した」を即座に伝えることがフィードバックです。フィードバックがないと不安になり、同じ操作を繰り返したり、離脱したりする原因になります。'},
+    {category:'UX概念',text:'一貫性がUXで重要な理由は？',options:['単調になる','学習が他でも活き認知負荷が下がる','コスト削減','SEO'],correct:1,explanation:'デザインの一貫性があると、ユーザーは「このボタンはここにあるはず」「この色は警告を意味する」という学習が他の画面でも活きます。一度覚えたことを使い回せるので、認知負荷が下がります。AppleやGoogleのデザインガイドラインが重視される理由です。'}
+  ]
+};
+
+// ========== STATE ==========
+let submittedTasks = JSON.parse(localStorage.getItem('bokan_submitted_tasks') || '{}');
+let worksheetData = JSON.parse(localStorage.getItem('bokan_worksheet') || '{}');
+let feedbackData = JSON.parse(localStorage.getItem('bokan_feedback') || '{}');
+let loginDates = JSON.parse(localStorage.getItem('bokan_logins') || '[]');
+let selectedModule = 'A';
+let quizState = 'start';
+let quizLevel = 'beginner';
+let quizQuestions = [];
+let quizIndex = 0;
+let quizScore = 0;
+let quizAnswered = false;
+
+// Record login
+const today = new Date().toLocaleDateString('sv-SE', {timeZone: 'Asia/Tokyo'});
+if (!loginDates.includes(today)) {
+  loginDates.push(today);
+  localStorage.setItem('bokan_logins', JSON.stringify(loginDates));
+}
+function getCurrentWeek() {
+  const now = new Date();
+  const start = new Date('2026-03-04');
+  const diff = Math.ceil((now - start) / (1000 * 60 * 60 * 24));
+  return Math.max(1, Math.min(Math.ceil(diff / 7), 20));
+}
+
+function getModuleById(id) { return CURRICULUM.find(m => m.id === id); }
+function getModuleForWeek(week) { return SCHEDULE.find(s => s.week === week)?.module; }
+
+function formatDate(dateStr) {
+  const d = new Date(dateStr);
+  const wd = ['日','月','火','水','木','金','土'];
+  return `${d.getMonth()+1}/${d.getDate()}（${wd[d.getDay()]}）`;
+}
+
+function getProgress() {
+  let total = 0, completed = 0;
+  CURRICULUM.forEach(m => {
+    if (LEARNING_CONTENT[m.id]) {
+      LEARNING_CONTENT[m.id].worksheets.forEach(ws => {
+        total++;
+        if (submittedTasks[m.id] && submittedTasks[m.id][ws.id]) completed++;
+      });
+    }
+  });
+  return total > 0 ? Math.round((completed / total) * 100) : 0;
+}
+
+function saveState() {
+  localStorage.setItem('bokan_submitted_tasks', JSON.stringify(submittedTasks));
+  localStorage.setItem('bokan_worksheet', JSON.stringify(worksheetData));
+  localStorage.setItem('bokan_feedback', JSON.stringify(feedbackData));
+}
+
+function getMokumokuSvg(dateStr) {
+  const sorted = [...loginDates].sort();
+  const idx = sorted.indexOf(dateStr);
+  if (idx === 0) return MOKUMOKU_NORMAL;
+  const prev = new Date(sorted[idx - 1]);
+  const curr = new Date(dateStr);
+  const diff = Math.floor((curr - prev) / (1000 * 60 * 60 * 24));
+  if (diff >= 3) return MOKUMOKU_SUPER;
+  if (diff >= 2) return MOKUMOKU_HAPPY;
+  return MOKUMOKU_NORMAL;
+}
+
+function showMokumokuMessage(text) {
+  const existing = document.querySelector('.mokumoku-message');
+  if (existing) existing.remove();
+  const div = document.createElement('div');
+  div.className = 'mokumoku-message';
+  div.innerHTML = MOKUMOKU_MSG + `<span class="mokumoku-message-text">${text}</span>`;
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), 2500);
+}
+
+function goToLearning(moduleId) {
+  const m = getModuleById(moduleId);
+  if (m && m.hasContent) {
+    selectedModule = moduleId;
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector('[data-tab="learning"]').classList.add('active');
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-learning').classList.add('active');
+    renderModuleSelect();
+    renderLearningContent();
+  }
+}
+
+// ========== EXPORT / IMPORT ==========
+function exportData() {
+  const data = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    submittedTasks,
+    worksheetData,
+    feedbackData,
+    loginDates
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `bokan_data.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showMokumokuMessage('データを保存したよ！');
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.version) throw new Error('invalid');
+      // マージ：既存データと読み込みデータを合算（新しい方を優先）
+      if (data.submittedTasks) Object.assign(submittedTasks, data.submittedTasks);
+      if (data.worksheetData) Object.assign(worksheetData, data.worksheetData);
+      if (data.feedbackData) Object.assign(feedbackData, data.feedbackData);
+      if (data.loginDates) {
+        loginDates = [...new Set([...loginDates, ...data.loginDates])].sort();
+      }
+      saveState();
+      updateProgress();
+      renderLearningContent();
+      renderCalendar();
+      renderSchedule();
+      showMokumokuMessage('データを読み込んだよ！');
+    } catch {
+      showMokumokuMessage('読み込みに失敗したよ…');
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function downloadTask(moduleId, taskId) {
+  const c = LEARNING_CONTENT[moduleId];
+  const ws = c.worksheets.find(w => w.id === taskId);
+  const data = worksheetData[moduleId] || {};
+  let allFilled = true;
+  ws.fields.forEach(f => {
+    const val = data[ws.id + '_' + f.id];
+    if (!val || val.trim() === '') allFilled = false;
+  });
+  if (!allFilled) { showMokumokuMessage('全部書いてからね！'); return; }
+  
+  const m = getModuleById(moduleId);
+  let md = `# Module ${m.id}: ${m.title}\n\n## ${ws.title}\n\n${ws.desc}\n\n---\n\n`;
+  ws.fields.forEach(f => {
+    md += `### ${f.label}\n\n${data[ws.id+'_'+f.id] || ''}\n\n`;
+  });
+  md += `---\n\n提出日: ${new Date().toLocaleDateString('ja-JP')}`;
+  
+  const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Module_${m.id}_${ws.title}.md`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  
+  if (!submittedTasks[moduleId]) submittedTasks[moduleId] = {};
+  submittedTasks[moduleId][taskId] = true;
+  saveState();
+  updateProgress();
+  renderLearningContent();
+  renderSchedule();
+  showMokumokuMessage('提出できたよ！');
+}
+
+function updateProgress() {
+  document.getElementById('progress-percent').textContent = getProgress() + '%';
+  document.getElementById('progress-bar-fill').style.width = getProgress() + '%';
+}
+
+function renderModuleSelect() {
+  const currentWeek = getCurrentWeek();
+  const currentModuleId = getModuleForWeek(currentWeek);
+  const container = document.getElementById('learning-module-select');
+  container.innerHTML = CURRICULUM.map(m => {
+    let cls = 'learning-module-btn';
+    if (m.id === selectedModule) cls += ' active';
+    if (!m.hasContent) cls += ' locked';
+    if (m.id === currentModuleId) cls += ' current';
+    return `<button class="${cls}" data-module="${m.id}" ${!m.hasContent ? 'disabled' : ''}>${m.id}</button>`;
+  }).join('');
+  container.querySelectorAll('.learning-module-btn:not(.locked)').forEach(btn => {
+    btn.addEventListener('click', () => {
+      selectedModule = btn.dataset.module;
+      renderModuleSelect();
+      renderLearningContent();
+    });
+  });
+}
+
+function renderLearningContent() {
+  const container = document.getElementById('learning-content-area');
+  const m = getModuleById(selectedModule);
+  const c = LEARNING_CONTENT[selectedModule];
+
+  // Update module name label
+  const nameEl = document.getElementById('learning-module-name');
+  const headerNameEl = document.getElementById('header-module-name');
+  const fixedBarText = document.getElementById('module-fixed-bar-text');
+  const label = c ? `MODULE ${m.id} — ${m.title}` : '';
+  if (nameEl) nameEl.textContent = label;
+  if (fixedBarText) fixedBarText.innerHTML = c ? `MODULE <span>${m.id}</span> — <span>${m.title}</span>` : '';
+  if (headerNameEl) {
+    headerNameEl.textContent = label;
+    headerNameEl.style.display = c ? 'block' : 'none';
+  }
+  if (!c) {
+    container.innerHTML = `<div class="learning-section"><p style="color:#999;text-align:center;padding:48px 0;">このモジュールは準備中です。</p></div>`;
+    return;
+  }
+  const data = worksheetData[selectedModule] || {};
+  const fb = feedbackData[selectedModule] || {};
+  const submitted = submittedTasks[selectedModule] || {};
+  
+  container.innerHTML = `
+    <div class="learning-section">
+      <h3 class="learning-section-title">MODULE ${m.id}: ${m.title}</h3>
+      <div class="learning-content"><p>${c.overview}</p></div>
+    </div>
+    <div class="learning-section">
+      <h3 class="learning-section-title">トピック解説</h3>
+      <div class="learning-content">${c.topics.map(t => `<h3>${t.title}</h3><p>${t.content}</p>`).join('')}</div>
+    </div>
+    <div class="learning-section">
+      <h3 class="learning-section-title">参考資料</h3>
+      ${c.references.map(r => `<div class="reference-item"><p class="reference-item-title">${r.title}</p><p class="reference-item-author">${r.author}</p><p class="reference-item-desc">${r.desc}</p></div>`).join('')}
+    </div>
+    ${c.worksheets.map(ws => `
+      <div class="learning-section">
+        <h3 class="learning-section-title">${ws.title}（Session ${ws.session}）</h3>
+        <p class="worksheet-desc">${ws.desc}</p>
+        ${ws.fields.map(f => `
+          <div class="worksheet-field">
+            <label class="worksheet-label">${f.label}</label>
+            ${f.type === 'input'
+              ? `<input type="text" class="worksheet-input" data-module="${selectedModule}" data-task="${ws.id}" data-field="${ws.id}_${f.id}" value="${data[ws.id+'_'+f.id] || ''}">`
+              : `<textarea class="worksheet-textarea" data-module="${selectedModule}" data-task="${ws.id}" data-field="${ws.id}_${f.id}">${data[ws.id+'_'+f.id] || ''}</textarea>`}
+          </div>
+        `).join('')}
+        <button class="btn-submit ${submitted[ws.id] ? 'submitted' : ''}" onclick="downloadTask('${m.id}', '${ws.id}')">
+          ${submitted[ws.id] ? '✓ 提出済み — 再提出する' : 'この課題を提出する'}
+        </button>
+        <div class="feedback-section">
+          <label class="feedback-label">フィードバック記録</label>
+          <textarea class="feedback-textarea" data-module="${selectedModule}" data-feedback="${ws.id}">${fb[ws.id] || ''}</textarea>
+        </div>
+      </div>
+    `).join('')}
+  `;
+  
+  container.querySelectorAll('.worksheet-input, .worksheet-textarea').forEach(el => {
+    el.addEventListener('input', () => {
+      const mod = el.dataset.module;
+      const field = el.dataset.field;
+      if (field) {
+        if (!worksheetData[mod]) worksheetData[mod] = {};
+        worksheetData[mod][field] = el.value;
+        saveState();
+      }
+    });
+  });
+  container.querySelectorAll('.feedback-textarea').forEach(el => {
+    el.addEventListener('input', () => {
+      const mod = el.dataset.module;
+      const fbId = el.dataset.feedback;
+      if (!feedbackData[mod]) feedbackData[mod] = {};
+      feedbackData[mod][fbId] = el.value;
+      saveState();
+    });
+  });
+}
+
+function renderCalendar() {
+  const container = document.getElementById('calendar-container');
+  const months = [
+    { year: 2026, month: 3, name: '3月 MARCH' },
+    { year: 2026, month: 4, name: '4月 APRIL' },
+    { year: 2026, month: 5, name: '5月 MAY' },
+    { year: 2026, month: 6, name: '6月 JUNE' },
+    { year: 2026, month: 7, name: '7月 JULY' }
+  ];
+  const lectureDates = SCHEDULE.map(s => s.date);
+  const todayStr = new Date().toLocaleDateString('sv-SE', {timeZone: 'Asia/Tokyo'});
+  
+  container.innerHTML = months.map(m => {
+    const firstDay = new Date(m.year, m.month - 1, 1);
+    const lastDay = new Date(m.year, m.month, 0);
+    const startPadding = firstDay.getDay();
+    const daysInMonth = lastDay.getDate();
+    let daysHtml = '';
+    for (let i = 0; i < startPadding; i++) daysHtml += '<div class="calendar-day empty"></div>';
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${m.year}-${String(m.month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const isLogged = loginDates.includes(dateStr);
+      const isToday = dateStr === todayStr;
+      const isLecture = lectureDates.includes(dateStr);
+      let cls = 'calendar-day';
+      if (isLogged) cls += ' logged';
+      if (isToday) cls += ' today';
+      if (isLecture) cls += ' lecture';
+      if (isLogged && NOTES[dateStr]) { 
+       daysHtml += `<div class="${cls}" style="cursor:pointer;" onclick="showNotePopup('${dateStr}')"><div class="mokumoku">${getMokumokuSvg(dateStr)}</div><span class="day-number">${d}</span><div class="note-mark">N</div></div>`;
+      }      
+      else if (isLogged) {
+        daysHtml += `<div class="${cls}"><div class="mokumoku">${getMokumokuSvg(dateStr)}</div><span class="day-number">${d}</span></div>`;
+      } else if (NOTES[dateStr]) {
+         daysHtml += `<div class="${cls}" style="cursor:pointer;" onclick="showNotePopup('${dateStr}')">${d}<div class="note-mark">N</div></div>`;
+      } else {
+        daysHtml += `<div class="${cls}">${d}</div>`;
+      }
+
+    }
+    return `<div class="calendar-month"><div class="calendar-month-title">${m.name}</div><div class="calendar-weekdays"><div class="calendar-weekday">日</div><div class="calendar-weekday">月</div><div class="calendar-weekday">火</div><div class="calendar-weekday">水</div><div class="calendar-weekday">木</div><div class="calendar-weekday">金</div><div class="calendar-weekday">土</div></div><div class="calendar-days">${daysHtml}</div></div>`;
+  }).join('');
+}
+
+function renderSchedule() {
+  const week = getCurrentWeek();
+  document.getElementById('schedule-grid').innerHTML = SCHEDULE.map(s => {
+    const m = getModuleById(s.module);
+    const isSubmitted = submittedTasks[s.module] && Object.keys(submittedTasks[s.module]).length > 0;
+    let cls = 'schedule-item';
+    if (s.week < week) cls += ' past';
+    if (s.week === week) cls += ' current';
+    if (isSubmitted) cls += ' submitted';
+    return `<div class="${cls}" data-module="${s.module}"><div class="schedule-item-header"><span class="schedule-item-week">W${s.week}</span><span class="schedule-item-date">${formatDate(s.date)}</span></div><p class="schedule-item-module">${m.id}. ${m.title}</p><p class="schedule-item-session">Session ${s.session}/2</p></div>`;
+  }).join('');
+  document.querySelectorAll('.schedule-item').forEach(item => {
+    item.addEventListener('click', () => goToLearning(item.dataset.module));
+  });
+}
+
+// ========== QUIZ FUNCTIONS ==========
+function renderQuiz() {
+  const container = document.getElementById('quiz-container');
+  if (quizState === 'start') {
+    container.innerHTML = `
+      <div class="quiz-start">
+
+        <!-- ヒーロー：マスコット＋タイトル -->
+        <div class="quiz-start-hero">
+          <div class="quiz-mascot-wrap">
+            <svg width="64" height="52" viewBox="0 0 44 36" fill="none">
+              <mask id="qMask"><rect width="100%" height="100%" fill="white"/><circle cx="24" cy="16" r="2" fill="black"/><circle cx="30" cy="18" r="2" fill="black"/></mask>
+              <g mask="url(#qMask)">
+                <ellipse cx="10" cy="22" rx="9" ry="8" fill="#b8956a"/>
+                <ellipse cx="22" cy="16" rx="14" ry="12" fill="#a08060"/>
+                <ellipse cx="36" cy="22" rx="8" ry="7" fill="#b8956a"/>
+                <ellipse cx="16" cy="26" rx="10" ry="8" fill="#b8956a"/>
+                <ellipse cx="30" cy="26" rx="10" ry="8" fill="#b8956a"/>
+              </g>
+              <path d="M14 23 L15 27 L18 25" stroke="#0a0a0a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="quiz-start-title">UX/UI クイズ</div>
+          <div class="quiz-start-sub">学習内容の理解度をチェックしよう</div>
+        </div>
+
+        <!-- レベル選択 -->
+        <div class="quiz-level-label">// LEVEL を選ぶ</div>
+        <div class="quiz-level">
+          <div class="quiz-level-card ${quizLevel==='beginner'?'selected':''}" data-level="beginner">
+            <div class="quiz-level-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#50b464" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22V12"/>
+                <path d="M12 12C12 12 7 10 5 6c4 0 7 2 7 6z" fill="rgba(80,180,100,0.15)"/>
+                <path d="M12 12C12 12 17 10 19 6c-4 0-7 2-7 6z" fill="rgba(80,180,100,0.15)"/>
+              </svg>
+            </div>
+            <div class="quiz-level-name">BEGINNER</div>
+            <div class="quiz-level-desc">基礎から確認</div>
+            <hr class="quiz-level-divider">
+            <div class="quiz-level-meta">
+              <span>10問 / 約5分</span>
+              <span>UXの定義・時間軸</span>
+              <span>5階層モデル基礎</span>
+            </div>
+          </div>
+          <div class="quiz-level-card ${quizLevel==='intermediate'?'selected':''}" data-level="intermediate">
+            <div class="quiz-level-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#c8a030" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="rgba(200,160,48,0.12)"/>
+              </svg>
+            </div>
+            <div class="quiz-level-name">INTERMEDIATE</div>
+            <div class="quiz-level-desc">一歩踏み込む</div>
+            <hr class="quiz-level-divider">
+            <div class="quiz-level-meta">
+              <span>10問 / 約8分</span>
+              <span>構造・骨格・表層</span>
+              <span>HCD・Lean UX</span>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-quiz" id="btn-start-quiz">クイズを始める →</button>
+      </div>
+    `;
+    container.querySelectorAll('.quiz-level-card').forEach(c => {
+      c.addEventListener('click', () => {
+        quizLevel = c.dataset.level;
+        renderQuiz();
+      });
+    });
+    document.getElementById('btn-start-quiz').addEventListener('click', startQuiz);
+  } else if (quizState === 'question') {
+    const q = quizQuestions[quizIndex];
+    const labels = ['A','B','C','D'];
+    container.innerHTML = `
+      <div class="quiz-meta"><span>問題 ${quizIndex+1} / ${quizQuestions.length}</span><span>正解: ${quizScore}</span></div>
+      <div class="quiz-progress"><div class="quiz-progress-fill" style="width:${(quizIndex/quizQuestions.length)*100}%"></div></div>
+      <div class="quiz-question">
+        <div class="quiz-category">${q.category}</div>
+        <div class="quiz-text">${q.text}</div>
+        <div class="quiz-options">${q.options.map((opt,i) => `<div class="quiz-option" data-index="${i}"><span class="quiz-option-label">${labels[i]}</span><span>${opt}</span></div>`).join('')}</div>
+        <div class="quiz-feedback" id="quiz-feedback">${q.explanation}</div>
+      </div>
+      <button class="btn-next" id="btn-next-quiz">次の問題へ →</button>
+    `;
+    container.querySelectorAll('.quiz-option').forEach(opt => {
+      opt.addEventListener('click', () => checkQuizAnswer(parseInt(opt.dataset.index)));
+    });
+    document.getElementById('btn-next-quiz').addEventListener('click', nextQuestion);
+  } else if (quizState === 'result') {
+    const pct = Math.round((quizScore / quizQuestions.length) * 100);
+    let msg = pct >= 80 ? '素晴らしい！' : pct >= 60 ? 'よくできました！' : 'もう一度復習しよう';
+    container.innerHTML = `
+      <div class="quiz-result">
+        <div class="quiz-result-score">${quizScore}/${quizQuestions.length}</div>
+        <div class="quiz-result-text">${msg}</div>
+        <div class="quiz-result-sub">正答率: ${pct}%</div>
+        <button class="btn-quiz" id="btn-retry">もう一度挑戦</button>
+        <button class="btn-next" style="display:inline-block;margin-left:12px;" id="btn-back">戻る</button>
+      </div>
+    `;
+    document.getElementById('btn-retry').addEventListener('click', () => { quizState = 'start'; renderQuiz(); });
+    document.getElementById('btn-back').addEventListener('click', () => { quizState = 'start'; renderQuiz(); });
+  }
+}
+
+function startQuiz() {
+  quizQuestions = [...QUIZ_QUESTIONS[quizLevel]].sort(() => Math.random() - 0.5).slice(0, 10);
+  quizIndex = 0;
+  quizScore = 0;
+  quizAnswered = false;
+  quizState = 'question';
+  renderQuiz();
+}
+
+function nextQuestion() {
+  quizIndex++;
+  quizAnswered = false;
+  if (quizIndex >= quizQuestions.length) quizState = 'result';
+  renderQuiz();
+}
+function checkQuizAnswer(idx) {
+  if (quizAnswered) return;
+  quizAnswered = true;
+  const q = quizQuestions[quizIndex];
+  const options = document.querySelectorAll('.quiz-option');
+  options.forEach((opt, i) => {
+    opt.classList.add('answered');
+    if (i === q.correct) opt.classList.add('correct');
+    else if (i === idx) opt.classList.add('wrong');
+  });
+  const isCorrect = idx === q.correct;
+  if (isCorrect) {
+    quizScore++;
+    showMokumokuMessage('正解！すごい！');
+  }
+  const fb = document.getElementById('quiz-feedback');
+  fb.innerHTML = isCorrect 
+    ? `<strong style="color:#b8956a;">正解！</strong> ${q.explanation}`
+    : `<strong style="color:#aa6666;">残念...</strong> ${q.explanation}`;
+  fb.classList.add('show');
+  document.getElementById('btn-next-quiz').classList.add('show');
+}
+
+// ========== NAVIGATION ==========
+function initNavigation() {
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+      // 学習タブ以外ではヘッダーのモジュール名を隠す
+      const headerNameEl = document.getElementById('header-module-name');
+      if (btn.dataset.tab !== 'learning') {
+        if (headerNameEl) headerNameEl.style.display = 'none';
+        document.getElementById('module-fixed-bar').classList.remove('show');
+      } else {
+        renderLearningContent();
+      }
+    });
+  });
+
+  // スクロールで固定バーの表示切替
+  window.addEventListener('scroll', () => {
+    const learningTab = document.getElementById('tab-learning');
+    if (!learningTab.classList.contains('active')) return;
+    const header = document.querySelector('.learning-section-header');
+    if (!header) return;
+    const bar = document.getElementById('module-fixed-bar');
+    const rect = header.getBoundingClientRect();
+    if (rect.bottom < 0) {
+      bar.classList.add('show');
+    } else {
+      bar.classList.remove('show');
+    }
+  });
+}
+
+function init() {
+  initNavigation();
+  renderModuleSelect();
+  renderLearningContent();
+  renderCalendar();
+  renderSchedule();
+  renderQuiz();
+  updateProgress();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
